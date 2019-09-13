@@ -121,7 +121,7 @@ Material:
     - WindSpeed: 0.3
     - _AO: 0
     - _ASEOutlineWidth: 0
-    - _AmbientOcclusion: 0
+    - _AmbientOcclusion: 0.038
     - _BendingInfluence: 0.898
     - _BendingRadius: 1.5
     - _BendingStiffness: 1
@@ -130,7 +130,7 @@ Material:
     - _BiDirectionality: 1
     - _BlendSpeed: 0
     - _BumpScale: 1
-    - _ColorVariation: 0.043
+    - _ColorVariation: 0.0256
     - _Colorvariation: 0.729
     - _Cutoff: 0.58
     - _Debug: 0
@@ -158,7 +158,7 @@ Material:
     - _Parallax: 0.02
     - _PigmentMapBrightness: 1
     - _PigmentMapHeight: 0.5
-    - _PigmentMapInfluence: 0.799
+    - _PigmentMapInfluence: 1
     - _PigmentMapSize: 0.05
     - _Roughness: 0.5
     - _SSSAmount: 0.46
@@ -170,8 +170,8 @@ Material:
     - _TerrainOffsetX: 394.7
     - _TerrainOffsetY: 250
     - _TerrainSize: 500
-    - _TransmissionAmount: 10
-    - _TransmissionSize: 0.63
+    - _TransmissionAmount: 0.46
+    - _TransmissionSize: 3.83
     - _Transmissionsize: 0
     - _UVSec: 0
     - _Uselightcolor: 0
