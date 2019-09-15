@@ -1,7 +1,10 @@
 ﻿using UnityEngine;
+using GameCreator.Core;
 
 public class BigBoyAnimator : MonoBehaviour
 {
+    public CodeTrigger trigger;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -21,12 +24,18 @@ public class BigBoyAnimator : MonoBehaviour
 
     void FootR()
     {
-        // Debug.Log("FootR");
+        if (this.trigger)
+        {
+            trigger.Trigger();
+        }
     }
 
     void FootL()
     {
-        // Debug.Log("FootL");
+        if (this.trigger)
+        {
+            trigger.Trigger();
+        }
     }
 
     void Land()
