@@ -1,21 +1,23 @@
 ﻿namespace GameCreator.Core
 {
-	using System.Collections;
-	using System.Collections.Generic;
-	using UnityEngine;
+    using System;
+    using UnityEngine;
 
     [AddComponentMenu("")]
     public class CodeTrigger : Igniter
-	{
-		#if UNITY_EDITOR
-        public new static string NAME = "My Igniters/Code Trigger";
-        //public new static string COMMENT = "Uncomment to add an informative message";
-        //public new static bool REQUIRES_COLLIDER = true; // uncomment if the igniter requires a collider
+    {
+        #if UNITY_EDITOR
+        public new static string NAME = "Generic/Code";
+        public new static string COMMENT = "Triggered manually via code";
         #endif
 
         private bool triggered = false;
+        public CodeTriggerDelegate triggerDelegate;
 
-        public bool example = false;
+        void Start()
+        {
+            triggerDelegate.OnTrigger += OnTrigger;
+        }
 
         private void Update()
         {
@@ -26,9 +28,9 @@
             }
         }
 
-        public void Trigger()
+        private void OnTrigger(object sender, EventArgs e)
         {
             this.triggered = true;
         }
-	}
+    }
 }

@@ -3,7 +3,7 @@ using GameCreator.Core;
 
 public class BigBoyAnimator : MonoBehaviour
 {
-    public CodeTrigger trigger;
+    public CodeTriggerDelegate footTriggerDelegate;
 
     // Start is called before the first frame update
     void Start()
@@ -24,17 +24,17 @@ public class BigBoyAnimator : MonoBehaviour
 
     void FootR()
     {
-        if (this.trigger)
+        if (footTriggerDelegate)
         {
-            trigger.Trigger();
+            footTriggerDelegate.CodeTrigger();
         }
     }
 
     void FootL()
     {
-        if (this.trigger)
+        if (footTriggerDelegate)
         {
-            trigger.Trigger();
+            footTriggerDelegate.CodeTrigger();
         }
     }
 
