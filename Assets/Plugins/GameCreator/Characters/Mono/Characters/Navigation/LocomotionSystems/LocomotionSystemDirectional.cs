@@ -44,7 +44,7 @@
                 targetRotation = this.characterLocomotion.locomotionDriver.transform.rotation;
             }
 
-            this.characterLocomotion.locomotionDriver.Move(targetDirection * Time.deltaTime);
+						this.characterLocomotion.locomotionDriver.SetVelocity(targetDirection);
 			this.characterLocomotion.locomotionDriver.transform.rotation = targetRotation;
 
 			if (this.characterLocomotion.navmeshAgent != null &&

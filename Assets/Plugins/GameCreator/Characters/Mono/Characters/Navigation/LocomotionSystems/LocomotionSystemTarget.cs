@@ -31,8 +31,8 @@
 			{
 				if (!this.usingNavmesh)
 				{
-					Vector3 defaultDirection = Vector3.up * this.characterLocomotion.verticalSpeed * Time.deltaTime;
-					this.characterLocomotion.locomotionDriver.Move(defaultDirection);
+					Vector3 defaultDirection = Vector3.up * this.characterLocomotion.verticalSpeed;
+					this.characterLocomotion.locomotionDriver.SetVelocity(defaultDirection);
                     return CharacterLocomotion.LOCOMOTION_SYSTEM.LocomotionDriver;
                 }
 
@@ -109,7 +109,7 @@
 				targetDirection = Vector3.Scale(targetDirection, HORIZONTAL_PLANE) * speed;
 				targetDirection += Vector3.up * this.characterLocomotion.verticalSpeed;
 
-				locomotionDriver.Move(targetDirection * Time.deltaTime);
+				locomotionDriver.SetVelocity(targetDirection);
 				locomotionDriver.transform.rotation = targetRot;
 
 				float remainingDistance = (Vector3.Distance(

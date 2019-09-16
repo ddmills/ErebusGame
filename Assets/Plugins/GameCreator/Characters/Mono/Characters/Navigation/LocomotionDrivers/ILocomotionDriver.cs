@@ -17,6 +17,10 @@ namespace GameCreator.Characters
             return false;
         }
 
+        public virtual void SetVelocity(Vector3 value)
+        {
+        }
+
         public virtual void SetCollisionDetection(bool isEnabled)
         {
         }

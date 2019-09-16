@@ -1,3 +1,4 @@
+using System.Numerics;
 namespace GameCreator.Characters
 {
     using UnityEngine;
@@ -9,16 +10,30 @@ namespace GameCreator.Characters
     [AddComponentMenu("Game Creator/Characters/Unity Locomotion Driver", 100)]
     public class LocomotionDriverUnityController : ILocomotionDriver
     {
-        [HideInInspector] public CharacterController characterController;
+        [HideInInspector] private CharacterController characterController;
+
+        private Vector3 velocity;
 
         public override void Setup(Character character)
         {
+            this.velocity = Vector3.zero;
             this.characterController = character.GetComponent<CharacterController>();
         }
 
-        public override void Move(Vector3 deltas)
+        void FixedUpdate()
         {
-            characterController.Move(deltas);
+            this.Move(this.velocity * Time.fixedDeltaTime);
+        }
+
+        public override void SetVelocity(Vector3 value)
+        {
+            this.velocity = value;
+        }
+
+        public override void Move(Vector3 delta)
+        {
+            characterController.Move(delta);
+            Debug.Log("!!! MOVE CALLED");
         }
 
         public override bool IsGrounded()
