@@ -32,8 +32,8 @@
 				if (!this.usingNavmesh)
 				{
 					Vector3 defaultDirection = Vector3.up * this.characterLocomotion.verticalSpeed * Time.deltaTime;
-					this.characterLocomotion.characterController.Move(defaultDirection);
-                    return CharacterLocomotion.LOCOMOTION_SYSTEM.CharacterController;
+					this.characterLocomotion.locomotionDriver.Move(defaultDirection);
+                    return CharacterLocomotion.LOCOMOTION_SYSTEM.LocomotionDriver;
                 }
 
                 this.characterLocomotion.navmeshAgent.enabled = true;
@@ -45,7 +45,6 @@
 				NavMeshAgent agent = this.characterLocomotion.navmeshAgent;
                 agent.enabled = true;
 
-                CharacterController controller = this.characterLocomotion.characterController;
                 if (agent.pathPending) return CharacterLocomotion.LOCOMOTION_SYSTEM.NavigationMeshAgent;
 
                 if (!agent.hasPath || agent.pathStatus != NavMeshPathStatus.PathComplete)
@@ -66,7 +65,7 @@
 
                 float remainingDistance = agent.remainingDistance;
 				bool isGrounded = agent.isOnOffMeshLink;
-				agent.speed = this.CalculateSpeed(controller.transform.forward, isGrounded);
+				agent.speed = this.CalculateSpeed(this.characterLocomotion.locomotionDriver.transform.forward, isGrounded);
 				agent.angularSpeed = this.characterLocomotion.angularSpeed;
 
 				agent.isStopped = false;
@@ -91,18 +90,18 @@
             }
 			else
 			{
-				if (this.characterLocomotion.navmeshAgent != null && 
+				if (this.characterLocomotion.navmeshAgent != null &&
                     this.characterLocomotion.navmeshAgent.enabled)
 				{
                     this.characterLocomotion.navmeshAgent.enabled = false;
                 }
 
-                CharacterController controller = this.characterLocomotion.characterController;
+                ILocomotionDriver locomotionDriver = this.characterLocomotion.locomotionDriver;
                 Vector3 targetPos = Vector3.Scale(this.targetPosition, HORIZONTAL_PLANE);
-				targetPos += Vector3.up * controller.transform.position.y;
-				Vector3 targetDirection = (targetPos - controller.transform.position).normalized;
+				targetPos += Vector3.up * locomotionDriver.transform.position.y;
+				Vector3 targetDirection = (targetPos - locomotionDriver.transform.position).normalized;
 
-				float speed = this.CalculateSpeed(targetDirection, controller.isGrounded);
+				float speed = this.CalculateSpeed(targetDirection, locomotionDriver.IsGrounded());
                 Quaternion targetRot = this.UpdateRotation(targetDirection);
 
 				this.UpdateAnimationConstraints(ref targetDirection, ref targetRot);
@@ -110,11 +109,11 @@
 				targetDirection = Vector3.Scale(targetDirection, HORIZONTAL_PLANE) * speed;
 				targetDirection += Vector3.up * this.characterLocomotion.verticalSpeed;
 
-				controller.Move(targetDirection * Time.deltaTime);
-				controller.transform.rotation = targetRot;
+				locomotionDriver.Move(targetDirection * Time.deltaTime);
+				locomotionDriver.transform.rotation = targetRot;
 
 				float remainingDistance = (Vector3.Distance(
-                    Vector3.Scale(controller.transform.position, HORIZONTAL_PLANE),
+                    Vector3.Scale(locomotionDriver.transform.position, HORIZONTAL_PLANE),
                     Vector3.Scale(this.targetPosition, HORIZONTAL_PLANE)
                 ));
 
@@ -127,7 +126,7 @@
 					this.Slowing(remainingDistance);
 				}
 
-                return CharacterLocomotion.LOCOMOTION_SYSTEM.CharacterController;
+                return CharacterLocomotion.LOCOMOTION_SYSTEM.LocomotionDriver;
             }
 		}
 
@@ -208,7 +207,7 @@
 
 		// PUBLIC METHODS: ------------------------------------------------------------------------
 
-        public void SetTarget(Ray ray, LayerMask layerMask, TargetRotation rotation, 
+        public void SetTarget(Ray ray, LayerMask layerMask, TargetRotation rotation,
             float stopThreshold, UnityAction callback = null)
 		{
             RaycastHit hit;
@@ -236,7 +235,7 @@
 
 				this.path = new NavMeshPath();
 				bool pathFound = NavMesh.CalculatePath(
-					this.characterLocomotion.characterController.transform.position,
+					this.characterLocomotion.locomotionDriver.transform.position,
 					position,
 					NavMesh.AllAreas,
 					this.path
@@ -264,7 +263,7 @@
         public void Stop(TargetRotation rotation = null, UnityAction callback = null)
         {
             this.SetTarget(
-                this.characterLocomotion.characterController.transform.position,
+                this.characterLocomotion.locomotionDriver.transform.position,
                 rotation,
                 0f,
                 callback

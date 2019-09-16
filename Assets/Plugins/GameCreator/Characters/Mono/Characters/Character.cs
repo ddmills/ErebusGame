@@ -9,7 +9,7 @@
     using GameCreator.Core;
     using System;
 
-    [RequireComponent(typeof(CharacterController))]
+    [RequireComponent(typeof(ILocomotionDriver))]
 	[AddComponentMenu("Game Creator/Characters/Character", 100)]
     public class Character : GlobalID, IGameSave
 	{
@@ -168,7 +168,7 @@
             if (active && this.ragdoll.GetState() != CharacterRagdoll.State.Normal) return;
             if (!active && this.ragdoll.GetState() == CharacterRagdoll.State.Normal) return;
 
-            this.characterLocomotion.characterController.detectCollisions = !active;
+            this.characterLocomotion.locomotionDriver.SetCollisionDetection(!active);
             this.animator.animator.enabled = !active;
 
             Transform model = this.animator.animator.transform;
@@ -236,7 +236,7 @@
 		public void Jump(float force)
 		{
             int jumpChain = this.characterLocomotion.Jump(force);
-            if (jumpChain >= 0 && this.animator != null) 
+            if (jumpChain >= 0 && this.animator != null)
 			{
 				this.animator.Jump();
 			}
@@ -261,7 +261,7 @@
 
 		// FLOOR COLLISION: -----------------------------------------------------------------------
 
-		private void OnControllerColliderHit(ControllerColliderHit hit) 
+		private void OnControllerColliderHit(ControllerColliderHit hit)
 		{
             if (!Application.isPlaying) return;
 			Rigidbody hitRigidbody = hit.collider.attachedRigidbody;
@@ -271,7 +271,7 @@
                 hitRigidbody.AddForceAtPosition(force, hit.point, ForceMode.Force);
 			}
 
-			float characterRadius = this.characterLocomotion.characterController.radius;
+			float characterRadius = this.characterLocomotion.locomotionDriver.GetRadius();
 			if (Vector3.Distance(transform.position, hit.point) > characterRadius) return;
 
 			this.characterLocomotion.terrainNormal = hit.normal;

@@ -21,19 +21,12 @@
             if (_character == null) return true;
 
             CharacterLocomotion locomotion = _character.characterLocomotion;
-            CharacterController controller = locomotion.characterController;
+            ILocomotionDriver locomotionDriver = locomotion.locomotionDriver;
 
-            switch (this.mounted)
+            _character.enabled = !this.mounted;
+            if (locomotionDriver != null)
             {
-                case true:
-                    _character.enabled = false;
-                    if (controller != null) controller.detectCollisions = false;
-                    break;
-
-                case false:
-                    if (controller != null) controller.detectCollisions = true;
-                    _character.enabled = true;
-                    break;
+                locomotionDriver.SetCollisionDetection(!this.mounted);
             }
 
             return true;

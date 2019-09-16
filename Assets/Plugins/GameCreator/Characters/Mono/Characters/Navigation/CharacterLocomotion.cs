@@ -20,7 +20,7 @@
 
         public enum LOCOMOTION_SYSTEM
         {
-            CharacterController,
+            LocomotionDriver,
             NavigationMeshAgent
         }
 
@@ -92,9 +92,8 @@
         private int jumpChain = 0;
 
         [HideInInspector] public Character character;
-
         [HideInInspector] public ANIM_CONSTRAINT animatorConstraint = ANIM_CONSTRAINT.NONE;
-        [HideInInspector] public CharacterController characterController;
+        [HideInInspector] public ILocomotionDriver locomotionDriver;
         [HideInInspector] public NavMeshAgent navmeshAgent;
 
         public LOCOMOTION_SYSTEM currentLocomotionType { get; private set; }
@@ -108,10 +107,11 @@
             this.lastJumpTime = Time.time;
 
             this.character = character;
-            this.characterController = this.character.GetComponent<CharacterController>();
+            this.locomotionDriver = this.character.GetComponent<ILocomotionDriver>();
 
-            this.currentLocomotionType = LOCOMOTION_SYSTEM.CharacterController;
+            this.currentLocomotionType = LOCOMOTION_SYSTEM.LocomotionDriver;
 
+            this.locomotionDriver.Setup(this.character);
             this.GenerateNavmeshAgent();
             this.SetDirectionalDirection(Vector3.zero);
         }
@@ -120,7 +120,7 @@
 
         public void Update()
         {
-            this.currentLocomotionType = LOCOMOTION_SYSTEM.CharacterController;
+            this.currentLocomotionType = LOCOMOTION_SYSTEM.LocomotionDriver;
 
             if (this.currentLocomotionSystem != null)
             {
@@ -129,8 +129,8 @@
 
             switch (this.currentLocomotionType)
             {
-                case LOCOMOTION_SYSTEM.CharacterController:
-                    this.UpdateVerticalSpeed(this.characterController.isGrounded);
+                case LOCOMOTION_SYSTEM.LocomotionDriver:
+                    this.UpdateVerticalSpeed(this.locomotionDriver.IsGrounded());
                     break;
 
                 case LOCOMOTION_SYSTEM.NavigationMeshAgent:
@@ -157,7 +157,7 @@
         public int Jump(float jumpForce)
         {
             bool isGrounded = (
-                this.characterController.isGrounded ||
+                this.locomotionDriver.IsGrounded() ||
                 Time.time < this.lastGroundTime + JUMP_COYOTE_TIME
             );
 
@@ -184,7 +184,7 @@
         {
             switch (this.currentLocomotionType)
             {
-                case CharacterLocomotion.LOCOMOTION_SYSTEM.CharacterController:
+                case CharacterLocomotion.LOCOMOTION_SYSTEM.LocomotionDriver:
                     this.character.transform.position = position;
                     break;
 
@@ -202,10 +202,9 @@
 
         public void ChangeHeight(float height)
         {
-            if (this.characterController != null)
+            if (this.locomotionDriver != null)
             {
-                this.characterController.height = height;
-                this.characterController.center = Vector3.up * (height / 2.0f);
+                this.locomotionDriver.SetHeight(height);
             }
 
             if (this.navmeshAgent != null)
@@ -287,8 +286,8 @@
             this.navmeshAgent.updatePosition = false;
             this.navmeshAgent.updateRotation = false;
             this.navmeshAgent.updateUpAxis = false;
-            this.navmeshAgent.radius = this.characterController.radius;
-            this.navmeshAgent.height = this.characterController.height;
+            this.navmeshAgent.radius = this.locomotionDriver.GetRadius();
+            this.navmeshAgent.height = this.locomotionDriver.GetHeight();
             this.navmeshAgent.acceleration = ACCELERATION;
         }
 
@@ -328,17 +327,17 @@
 
             switch (locomotionSystem)
             {
-                case LOCOMOTION_SYSTEM.CharacterController:
-                    worldVelocity = this.characterController.velocity;
+                case LOCOMOTION_SYSTEM.LocomotionDriver:
+                    worldVelocity = this.locomotionDriver.GetVelocity();
                     isGrounded = (
-                        this.characterController.isGrounded ||
+                        this.locomotionDriver.IsGrounded() ||
                         Time.time - this.lastGroundTime < GROUND_TIME_OFFSET
                     );
                     break;
 
                 case LOCOMOTION_SYSTEM.NavigationMeshAgent:
                     worldVelocity = (this.navmeshAgent.velocity == Vector3.zero
-                        ? this.characterController.velocity
+                        ? this.locomotionDriver.GetVelocity()
                         : this.navmeshAgent.velocity
                     );
                     isGrounded = (

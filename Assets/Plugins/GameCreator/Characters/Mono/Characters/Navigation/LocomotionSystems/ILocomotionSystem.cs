@@ -92,7 +92,7 @@
                 }
             }
 
-            return CharacterLocomotion.LOCOMOTION_SYSTEM.CharacterController;
+            return CharacterLocomotion.LOCOMOTION_SYSTEM.LocomotionDriver;
         }
 
 		public abstract void OnDestroy();
@@ -103,8 +103,8 @@
 		{
 			Quaternion targetRotation = this.characterLocomotion.character.transform.rotation;
             this.aimDirection = this.characterLocomotion.character.transform.forward;
-            this.movementDirection = (targetDirection == Vector3.zero 
-                ? this.aimDirection 
+            this.movementDirection = (targetDirection == Vector3.zero
+                ? this.aimDirection
                 : targetDirection.normalized
             );
 
@@ -196,8 +196,8 @@
 
 		protected float CalculateSpeed(Vector3 targetDirection, bool isGrounded)
 		{
-			float speed = (this.characterLocomotion.canRun 
-				? this.characterLocomotion.runSpeed 
+			float speed = (this.characterLocomotion.canRun
+				? this.characterLocomotion.runSpeed
                 : this.characterLocomotion.runSpeed / 2.0f
 			);
 
@@ -218,18 +218,18 @@
 
 		protected virtual void UpdateAnimationConstraints(ref Vector3 targetDirection, ref Quaternion targetRotation)
 		{
-			if (this.characterLocomotion.animatorConstraint == CharacterLocomotion.ANIM_CONSTRAINT.KEEP_MOVEMENT) 
+			if (this.characterLocomotion.animatorConstraint == CharacterLocomotion.ANIM_CONSTRAINT.KEEP_MOVEMENT)
 			{
-				if (targetDirection == Vector3.zero) 
+				if (targetDirection == Vector3.zero)
 				{
-					targetDirection = this.characterLocomotion.characterController.transform.forward;
+					targetDirection = this.characterLocomotion.locomotionDriver.transform.forward;
 				}
 			}
 
-			if (this.characterLocomotion.animatorConstraint == CharacterLocomotion.ANIM_CONSTRAINT.KEEP_POSITION) 
+			if (this.characterLocomotion.animatorConstraint == CharacterLocomotion.ANIM_CONSTRAINT.KEEP_POSITION)
 			{
 				targetDirection = Vector3.zero;
-				targetRotation = this.characterLocomotion.characterController.transform.rotation;
+				targetRotation = this.characterLocomotion.locomotionDriver.transform.rotation;
 			}
 		}
 
@@ -237,8 +237,8 @@
         {
             float slopeAngle = Vector3.Angle(Vector3.up, this.characterLocomotion.terrainNormal);
             this.isSliding = (
-                this.characterLocomotion.character.IsGrounded() && 
-                slopeAngle > this.characterLocomotion.characterController.slopeLimit
+                this.characterLocomotion.character.IsGrounded() &&
+                slopeAngle > this.characterLocomotion.locomotionDriver.GetSlopeAngleLimit()
             );
 
             if (this.isSliding)

@@ -6,7 +6,7 @@
 	using GameCreator.Core;
 	using GameCreator.Core.Hooks;
 
-	public class LocomotionSystemDirectional : ILocomotionSystem 
+	public class LocomotionSystemDirectional : ILocomotionSystem
 	{
 		// PROPERTIES: ----------------------------------------------------------------------------
 
@@ -26,7 +26,7 @@
 
 			Vector3 targetDirection = this.desiredDirection;
 
-            float speed = this.CalculateSpeed(targetDirection, this.characterLocomotion.characterController.isGrounded);
+            float speed = this.CalculateSpeed(targetDirection, this.characterLocomotion.locomotionDriver.IsGrounded());
 			Quaternion targetRotation = this.UpdateRotation(targetDirection);
 
 			this.UpdateAnimationConstraints(ref targetDirection, ref targetRotation);
@@ -41,19 +41,19 @@
             if (this.isDashing)
             {
                 targetDirection = this.dashVelocity;
-                targetRotation = this.characterLocomotion.characterController.transform.rotation;
+                targetRotation = this.characterLocomotion.locomotionDriver.transform.rotation;
             }
 
-            this.characterLocomotion.characterController.Move(targetDirection * Time.deltaTime);
-			this.characterLocomotion.characterController.transform.rotation = targetRotation;
+            this.characterLocomotion.locomotionDriver.Move(targetDirection * Time.deltaTime);
+			this.characterLocomotion.locomotionDriver.transform.rotation = targetRotation;
 
-			if (this.characterLocomotion.navmeshAgent != null && 
+			if (this.characterLocomotion.navmeshAgent != null &&
                 this.characterLocomotion.navmeshAgent.isActiveAndEnabled)
 			{
                 this.characterLocomotion.navmeshAgent.enabled = false;
             }
 
-            return CharacterLocomotion.LOCOMOTION_SYSTEM.CharacterController;
+            return CharacterLocomotion.LOCOMOTION_SYSTEM.LocomotionDriver;
 		}
 
         public override void OnDestroy ()

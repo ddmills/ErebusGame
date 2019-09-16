@@ -144,7 +144,7 @@
                 this.BuildColliders() &&
                 this.BuildBodies() &&
                 this.BuildJoints() &&
-                this.BuildMasses() && 
+                this.BuildMasses() &&
                 this.BuildLayers() &&
                 this.BuildChunks()
             );
@@ -268,7 +268,7 @@
             this.state = State.Ragdoll;
             this.interpolation = Vector3.zero;
 
-            Vector3 velocity = this.character.characterLocomotion.characterController.velocity;
+            Vector3 velocity = this.character.characterLocomotion.locomotionDriver.GetVelocity();
             for (int i = 0; i < this.bones.Length; ++i)
             {
                 this.bones[i].rigidbody.AddForce(velocity, ForceMode.VelocityChange);
@@ -291,7 +291,7 @@
                 if (!hits[i].transform.IsChildOf(this.character.transform) &&
                     !hits[i].transform.IsChildOf(root.anchor))
                 {
-                    float offset = this.character.characterLocomotion.characterController.skinWidth;
+                    float offset = this.character.characterLocomotion.locomotionDriver.GetSkinWidth();
                     this.character.transform.position = hits[i].point + (Vector3.up * offset);
                     break;
                 }
@@ -370,8 +370,8 @@
             return true;
         }
 
-        void SetupJoint(Bone bone, Bone parent, Vector3 twistAxis, Vector3 swingAxis, 
-                        float minLimit, float maxLimit, float swingLimit, Type collider, 
+        void SetupJoint(Bone bone, Bone parent, Vector3 twistAxis, Vector3 swingAxis,
+                        float minLimit, float maxLimit, float swingLimit, Type collider,
                         float radius, float density)
         {
             int boneIndex = (int)bone;
@@ -419,7 +419,7 @@
             {
                 Vector3 endPoint = this.bones[(int)bone.children[0]].anchor.position;
                 RagdollUtilities.GetDirection(
-                    bone.anchor.InverseTransformPoint(endPoint), 
+                    bone.anchor.InverseTransformPoint(endPoint),
                     out direction, out distance
                 );
             }
@@ -618,7 +618,7 @@
             Gizmos.color = Color.red;
 
             Gizmos.DrawLine(
-                this.bones[(int)a].anchor.position, 
+                this.bones[(int)a].anchor.position,
                 this.bones[(int)b].anchor.position
             );
 
