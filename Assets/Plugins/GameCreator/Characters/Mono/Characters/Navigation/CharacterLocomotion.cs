@@ -302,7 +302,7 @@
 
         private void UpdateVerticalSpeed(bool isGrounded)
         {
-            this.verticalSpeed += (this.gravity * Time.deltaTime);
+            // this.verticalSpeed += (this.gravity * Time.deltaTime);
             if (isGrounded)
             {
                 if (Time.time - this.lastGroundTime > JUMP_COYOTE_TIME &&
@@ -313,10 +313,10 @@
 
                 this.jumpChain = 0;
                 this.lastGroundTime = Time.time;
-                this.verticalSpeed = Mathf.Max(this.verticalSpeed, MAX_GROUND_VSPEED);
+                // this.verticalSpeed = Mathf.Max(this.verticalSpeed, MAX_GROUND_VSPEED);
             }
 
-            this.verticalSpeed = Mathf.Max(this.verticalSpeed, this.maxFallSpeed);
+            // this.verticalSpeed = Mathf.Max(this.verticalSpeed, this.maxFallSpeed);
         }
 
         private void UpdateCharacterState(LOCOMOTION_SYSTEM locomotionSystem)

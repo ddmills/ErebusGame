@@ -12,7 +12,11 @@ namespace GameCreator.Characters
     {
         [HideInInspector] private CharacterController characterController;
 
+        [SerializeField] private float gravity = -9.81f;
+        [SerializeField] private float maxFallSpeed = -100f;
+
         private Vector3 velocity;
+        private const float MAX_GROUND_VSPEED = -9.8f;
 
         public override void Setup(Character character)
         {
@@ -22,7 +26,14 @@ namespace GameCreator.Characters
 
         void FixedUpdate()
         {
-            this.Move(this.velocity * Time.fixedDeltaTime);
+            float verticalVelocity = this.gravity;
+
+            if (this.IsGrounded())
+            {
+                verticalVelocity = Mathf.Max(verticalVelocity, MAX_GROUND_VSPEED);
+            }
+
+            this.Move((this.velocity + Vector3.up * verticalVelocity) * Time.fixedDeltaTime);
         }
 
         public override void SetVelocity(Vector3 value)
@@ -33,7 +44,6 @@ namespace GameCreator.Characters
         public override void Move(Vector3 delta)
         {
             characterController.Move(delta);
-            Debug.Log("!!! MOVE CALLED");
         }
 
         public override bool IsGrounded()
