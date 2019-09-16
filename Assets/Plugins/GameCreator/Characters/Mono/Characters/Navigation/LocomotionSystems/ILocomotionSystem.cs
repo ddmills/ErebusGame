@@ -71,7 +71,7 @@
             this.dashDrag = drag;
 
             this.dashVelocity = direction.normalized * (
-                impulse * Mathf.Log(1f / (Time.deltaTime * this.dashDrag + 1)) / -Time.deltaTime
+                impulse * Mathf.Log(1f / (Time.fixedDeltaTime * this.dashDrag + 1)) / -Time.fixedDeltaTime
             );
         }
 
@@ -83,7 +83,7 @@
             {
                 if (Time.time >= this.dashStartTime + this.dashDuration)
                 {
-                    this.dashVelocity /= 1 + this.dashDrag * Time.deltaTime;
+                    this.dashVelocity /= 1 + this.dashDrag * Time.fixedDeltaTime;
                 }
 
                 if (this.dashVelocity.magnitude < this.characterLocomotion.runSpeed)
@@ -120,7 +120,7 @@
                 targetRotation = Quaternion.RotateTowards(
                     srcRotation,
                     dstRotation,
-                    Time.deltaTime * this.characterLocomotion.angularSpeed
+                    Time.fixedDeltaTime * this.characterLocomotion.angularSpeed
                 );
             }
             else if (faceDirection.direction == CharacterLocomotion.FACE_DIRECTION.CameraDirection &&
@@ -137,7 +137,7 @@
                 targetRotation = Quaternion.RotateTowards(
                     srcRotation,
                     dstRotation,
-                    Time.deltaTime * this.characterLocomotion.angularSpeed
+                    Time.fixedDeltaTime * this.characterLocomotion.angularSpeed
                 );
             }
             else if (faceDirection.direction == CharacterLocomotion.FACE_DIRECTION.Target)
@@ -154,7 +154,7 @@
                 targetRotation = Quaternion.RotateTowards(
                     srcRotation,
                     dstRotation,
-                    Time.deltaTime * this.characterLocomotion.angularSpeed
+                    Time.fixedDeltaTime * this.characterLocomotion.angularSpeed
                 );
             }
             else if (faceDirection.direction == CharacterLocomotion.FACE_DIRECTION.GroundPlaneCursor)
@@ -186,7 +186,7 @@
                     targetRotation = Quaternion.RotateTowards(
                         srcRotation,
                         dstRotation,
-                        Time.deltaTime * this.characterLocomotion.angularSpeed
+                        Time.fixedDeltaTime * this.characterLocomotion.angularSpeed
                     );
                 }
             }

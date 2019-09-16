@@ -135,7 +135,7 @@
 
         // UPDATE: --------------------------------------------------------------------------------
 
-        private void Update()
+        private void FixedUpdate()
 		{
             if (!Application.isPlaying) return;
             this.CharacterUpdate();

@@ -186,7 +186,7 @@
 			{
 				if (agent.velocity == Vector3.zero)
 				{
-					agent.Move(agent.transform.forward * agent.speed * Time.deltaTime);
+					agent.Move(agent.transform.forward * agent.speed * Time.fixedDeltaTime);
 				}
 			}
 
