@@ -149,7 +149,10 @@
 
             Vector3 moveDirection = maincam.transform.TransformDirection(direction);
             moveDirection.Scale(PLANE);
-            moveDirection.Normalize();
+            if (moveDirection.magnitude > 1f)
+            {
+                moveDirection.Normalize();
+            }
             this.characterLocomotion.SetDirectionalDirection(moveDirection);
         }
 

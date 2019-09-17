@@ -126,6 +126,11 @@ namespace GameCreator.Characters
             sensor.RecalibrateRaycastArrayPositions();
         }
 
+        public override void SetExtendSensorRange(bool isExtended)
+        {
+            IsUsingExtendedSensorRange = isExtended;
+        }
+
         public override void SetVelocity(Vector3 velocity)
         {
             rb.velocity = velocity + currentGroundAdjustmentVelocity;

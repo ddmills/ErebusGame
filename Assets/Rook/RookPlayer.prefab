@@ -1659,6 +1659,7 @@ MonoBehaviour:
     isDashing: 0
     verticalSpeed: 0
     normal: {x: 0, y: 1, z: 0}
+    locomotionState: 0
   save: 1
   inputType: 1
   mouseButtonMove: 0
@@ -1667,7 +1668,7 @@ MonoBehaviour:
     m_Bits: 4294967295
   invertAxis: 0
   jumpKey: 32
-  jumpMomentumInitial: 30
+  jumpMomentumInitial: 4
   jumpMomentumPost: 0.1
   jumpMomentumPostDurationSeconds: 0.5
 --- !u!114 &9049899562899933069

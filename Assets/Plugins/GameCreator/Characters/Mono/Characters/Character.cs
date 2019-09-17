@@ -13,9 +13,17 @@
 	[AddComponentMenu("Game Creator/Characters/Character", 100)]
     public class Character : GlobalID, IGameSave
 	{
+        public enum LocomotionState
+        {
+            Grounded,
+            Falling,
+            Rising
+        }
+
 		[System.Serializable]
 		public class State
 		{
+            // TODO: cleanup!
 			public Vector3 forwardSpeed;
 			public float sidesSpeed;
             public float pivotSpeed;
@@ -25,9 +33,12 @@
             public float isDashing;
 			public float verticalSpeed;
 			public Vector3 normal;
+            public LocomotionState locomotionState;
 
 			public State()
 			{
+                this.locomotionState = LocomotionState.Grounded;
+				this.forwardSpeed = Vector3.zero;
 				this.forwardSpeed = Vector3.zero;
 				this.sidesSpeed = 0f;
                 this.targetLock = false;
@@ -217,7 +228,7 @@
         public bool IsGrounded()
         {
             if (this.characterState == null) return true;
-            return Mathf.Approximately(this.characterState.isGrounded, 1.0f);
+            return this.characterState.locomotionState == LocomotionState.Grounded;
         }
 
         public CharacterAnimator GetCharacterAnimator()

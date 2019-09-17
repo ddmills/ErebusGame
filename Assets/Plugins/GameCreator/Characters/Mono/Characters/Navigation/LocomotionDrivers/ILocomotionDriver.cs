@@ -17,6 +17,10 @@ namespace GameCreator.Characters
             return false;
         }
 
+        public virtual void SetExtendSensorRange(bool isExtended)
+        {
+        }
+
         public virtual void SetVelocity(Vector3 value)
         {
         }
