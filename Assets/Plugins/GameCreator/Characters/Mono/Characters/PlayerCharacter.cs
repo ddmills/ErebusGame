@@ -45,6 +45,10 @@
         public bool invertAxis = false;
 
         public KeyCode jumpKey = KeyCode.Space;
+        public float jumpMomentumInitial = 15f;
+        public float jumpMomentumPost = 1f;
+        public float jumpMomentumPostDurationSeconds = 5;
+        private float currentJumpDurationStartTime = 0;
 
         private bool uiConstrained = false;
 
@@ -80,6 +84,17 @@
         }
 
         // UPDATE: --------------------------------------------------------------------------------
+        private void Update()
+        {
+            if (Input.GetKeyDown(this.jumpKey) && this.IsControllable())
+            {
+                if (this.IsGrounded())
+                {
+                    this.AddMomentum(Vector3.up * jumpMomentumInitial);
+                    this.currentJumpDurationStartTime = Time.fixedTime;
+                }
+            }
+        }
 
         private void FixedUpdate()
         {
@@ -96,7 +111,15 @@
 
             if (this.IsControllable())
             {
-                if (Input.GetKeyDown(this.jumpKey)) this.Jump();
+                if (Input.GetKey(this.jumpKey))
+                {
+                    float currentJumpDurationSeconds = Time.fixedTime - this.currentJumpDurationStartTime;
+
+                    if (currentJumpDurationSeconds <= this.jumpMomentumPostDurationSeconds)
+                    {
+                        this.AddMomentum(Vector3.up * jumpMomentumPost);
+                    }
+                }
             }
 
             this.CharacterUpdate();

@@ -11,7 +11,7 @@
 	using GameCreator.Core;
 
 	[CustomEditor(typeof(Character), true)]
-	public class CharacterEditor : Editor 
+	public class CharacterEditor : Editor
 	{
 		public class Section
 		{
@@ -72,7 +72,7 @@
         private const string PROP_GRAVTY = "gravity";
         private const string PROP_FALLSP = "maxFallSpeed";
         private const string PROP_SAVEOB = "save";
-        
+
 		private const string PROP_FACEDR = "faceDirection";
         private const string PROP_FACEDT = "faceDirectionTarget";
 		private const string PROP_NAVMES = "canUseNavigationMesh";

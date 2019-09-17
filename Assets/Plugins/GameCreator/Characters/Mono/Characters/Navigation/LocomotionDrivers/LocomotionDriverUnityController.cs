@@ -26,14 +26,7 @@ namespace GameCreator.Characters
 
         void FixedUpdate()
         {
-            float verticalVelocity = this.gravity;
-
-            if (this.IsGrounded())
-            {
-                verticalVelocity = Mathf.Max(verticalVelocity, MAX_GROUND_VSPEED);
-            }
-
-            this.Move((this.velocity + Vector3.up * verticalVelocity) * Time.fixedDeltaTime);
+            this.Move(this.velocity * Time.fixedDeltaTime);
         }
 
         public override void SetVelocity(Vector3 value)

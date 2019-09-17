@@ -102,7 +102,7 @@
                 this.UpdateAnimationConstraints(ref targetDirection, ref targetRotation);
 
                 targetDirection = Vector3.Scale(targetDirection, HORIZONTAL_PLANE) * speed;
-                // targetDirection += Vector3.up * this.characterLocomotion.verticalSpeed;
+                targetDirection += this.characterLocomotion.GetMomentum();
 
                 locomotionDriver.SetVelocity(targetDirection);
                 locomotionDriver.transform.rotation = targetRotation;

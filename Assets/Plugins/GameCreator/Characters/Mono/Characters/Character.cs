@@ -233,6 +233,11 @@
             if (this.animator != null) this.animator.Dash();
         }
 
+        public void AddMomentum(Vector3 momentum)
+        {
+            this.characterLocomotion.AddMomentum(momentum);
+        }
+
 		public void Jump(float force)
 		{
             int jumpChain = this.characterLocomotion.Jump(force);

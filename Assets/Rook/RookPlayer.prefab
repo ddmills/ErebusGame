@@ -1601,7 +1601,7 @@ MonoBehaviour:
     maxFallSpeed: -100
     canRun: 1
     canJump: 1
-    jumpForce: 7
+    jumpForce: 15
     jumpTimes: 2
     timeBetweenJumps: 0.2
     terrainNormal: {x: 0, y: 1, z: 0}
@@ -1667,6 +1667,9 @@ MonoBehaviour:
     m_Bits: 4294967295
   invertAxis: 0
   jumpKey: 32
+  jumpMomentumInitial: 30
+  jumpMomentumPost: 0.1
+  jumpMomentumPostDurationSeconds: 0.5
 --- !u!114 &9049899562899933069
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1793,6 +1796,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 215831a34ea3d3a41a7f9b7db44871b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  gravity: -9.81
+  maxFallSpeed: -100
 --- !u!1 &9049899562914426688
 GameObject:
   m_ObjectHideFlags: 0

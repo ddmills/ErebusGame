@@ -1,24 +1,24 @@
 ﻿namespace GameCreator.Core
 {
-	using System.Collections;
-	using System.Collections.Generic;
-	using UnityEngine;
-	using UnityEngine.Events;
-	using GameCreator.Core;
-	using GameCreator.Core.Hooks;
-	using GameCreator.Characters;
+    using System.Collections;
+    using System.Collections.Generic;
+    using UnityEngine;
+    using UnityEngine.Events;
+    using GameCreator.Core;
+    using GameCreator.Core.Hooks;
+    using GameCreator.Characters;
     using GameCreator.Variables;
 
-	#if UNITY_EDITOR
-	using UnityEditor;
-	#endif
+    #if UNITY_EDITOR
+    using UnityEditor;
+    #endif
 
-	[AddComponentMenu("")]
-	public class ActionCharacterJump : IAction
-	{
+    [AddComponentMenu("")]
+    public class ActionCharacterJump : IAction
+    {
         public TargetCharacter target = new TargetCharacter();
 
-		public bool overrideJumpForce = false;
+        public bool overrideJumpForce = false;
         public NumberProperty jumpForce = new NumberProperty(10f);
 
         // EXECUTABLE: ----------------------------------------------------------------------------
@@ -35,58 +35,58 @@
             return true;
         }
 
-		// +--------------------------------------------------------------------------------------+
-		// | EDITOR                                                                               |
-		// +--------------------------------------------------------------------------------------+
+        // +--------------------------------------------------------------------------------------+
+        // | EDITOR                                                                               |
+        // +--------------------------------------------------------------------------------------+
 
-		#if UNITY_EDITOR
+        #if UNITY_EDITOR
 
-		public static new string NAME = "Character/Character Jump";
-		private const string NODE_TITLE = "Jump character {0}";
+        public static new string NAME = "Character/Character Jump";
+        private const string NODE_TITLE = "Jump character {0}";
 
-		// PROPERTIES: ----------------------------------------------------------------------------
+        // PROPERTIES: ----------------------------------------------------------------------------
 
-		private SerializedProperty spTarget;
-		private SerializedProperty spOverrideJumpForce;
-		private SerializedProperty spJumpForce;
+        private SerializedProperty spTarget;
+        private SerializedProperty spOverrideJumpForce;
+        private SerializedProperty spJumpForce;
 
-		// INSPECTOR METHODS: ---------------------------------------------------------------------
+        // INSPECTOR METHODS: ---------------------------------------------------------------------
 
-		public override string GetNodeTitle()
-		{
+        public override string GetNodeTitle()
+        {
             return string.Format(NODE_TITLE, this.target);
-		}
+        }
 
-		protected override void OnEnableEditorChild ()
-		{
-			this.spTarget = this.serializedObject.FindProperty("target");
-			this.spOverrideJumpForce = this.serializedObject.FindProperty("overrideJumpForce");
-			this.spJumpForce = this.serializedObject.FindProperty("jumpForce");
-		}
+        protected override void OnEnableEditorChild ()
+        {
+            this.spTarget = this.serializedObject.FindProperty("target");
+            this.spOverrideJumpForce = this.serializedObject.FindProperty("overrideJumpForce");
+            this.spJumpForce = this.serializedObject.FindProperty("jumpForce");
+        }
 
-		protected override void OnDisableEditorChild ()
-		{
-			this.spTarget = null;
-			this.spOverrideJumpForce = null;
-			this.spJumpForce = null;
-		}
+        protected override void OnDisableEditorChild ()
+        {
+            this.spTarget = null;
+            this.spOverrideJumpForce = null;
+            this.spJumpForce = null;
+        }
 
-		public override void OnInspectorGUI()
-		{
-			this.serializedObject.Update();
+        public override void OnInspectorGUI()
+        {
+            this.serializedObject.Update();
 
             EditorGUILayout.PropertyField(this.spTarget);
-			EditorGUILayout.PropertyField(this.spOverrideJumpForce);
-			
+            EditorGUILayout.PropertyField(this.spOverrideJumpForce);
+
             EditorGUI.BeginDisabledGroup(!this.spOverrideJumpForce.boolValue);
             EditorGUI.indentLevel++;
             EditorGUILayout.PropertyField(this.spJumpForce);
             EditorGUI.indentLevel--;
             EditorGUI.EndDisabledGroup();
 
-			this.serializedObject.ApplyModifiedProperties();
-		}
+            this.serializedObject.ApplyModifiedProperties();
+        }
 
-		#endif
-	}
+        #endif
+    }
 }

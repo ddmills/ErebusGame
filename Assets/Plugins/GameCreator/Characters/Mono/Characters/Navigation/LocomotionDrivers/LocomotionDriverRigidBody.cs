@@ -25,7 +25,7 @@ namespace GameCreator.Characters
         [SerializeField] private bool sensorArrayRowsAreOffset = false;
         [SerializeField] private float sensorRadiusModifier = 0.8f;
 
-        private bool IsUsingExtendedSensorRange  = true;
+        private bool IsUsingExtendedSensorRange = true;
         private float baseSensorRange = 0f;
         private bool isGrounded;
         private Vector3 currentGroundAdjustmentVelocity = Vector3.zero;
@@ -134,7 +134,6 @@ namespace GameCreator.Characters
         public override void Move(Vector3 deltas)
         {
             rb.MovePosition(deltas);
-            Debug.Log("!! Move invoked");
         }
 
         public override bool IsGrounded()

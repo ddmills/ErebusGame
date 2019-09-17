@@ -67,7 +67,7 @@
 
         public bool canRun = true;
         public bool canJump = true;
-        public float jumpForce = 6.0f;
+        public float jumpForce = 15.0f;
         public int jumpTimes = 1;
         public float timeBetweenJumps = 0.5f;
 
@@ -90,6 +90,7 @@
         private float lastGroundTime = 0f;
         private float lastJumpTime = 0f;
         private int jumpChain = 0;
+        private Vector3 momentum = Vector3.zero;
 
         [HideInInspector] public Character character;
         [HideInInspector] public ANIM_CONSTRAINT animatorConstraint = ANIM_CONSTRAINT.NONE;
@@ -127,17 +128,7 @@
                 this.currentLocomotionType = this.currentLocomotionSystem.Update();
             }
 
-            switch (this.currentLocomotionType)
-            {
-                case LOCOMOTION_SYSTEM.LocomotionDriver:
-                    this.UpdateVerticalSpeed(this.locomotionDriver.IsGrounded());
-                    break;
-
-                case LOCOMOTION_SYSTEM.NavigationMeshAgent:
-                    this.UpdateVerticalSpeed(!this.navmeshAgent.isOnOffMeshLink);
-                    break;
-            }
-
+            this.HandleGravity();
             this.UpdateCharacterState(this.currentLocomotionType);
         }
 
@@ -147,6 +138,11 @@
         {
             this.SetDirectionalDirection(Vector3.zero);
             this.currentLocomotionSystem.Dash(direction, impulse, duration, drag);
+        }
+
+        public void AddMomentum(Vector3 value)
+        {
+            this.momentum += value;
         }
 
         public int Jump()
@@ -220,6 +216,11 @@
 
             if (!isControllable) this.SetDirectionalDirection(Vector3.zero);
             this.character.onIsControllable.Invoke(this.isControllable);
+        }
+
+        public Vector3 GetMomentum()
+        {
+            return this.momentum;
         }
 
         public Vector3 GetAimDirection()
@@ -298,6 +299,27 @@
 
             this.currentLocomotionSystem = new TLS();
             this.currentLocomotionSystem.Setup(this);
+        }
+
+        private void HandleGravity()
+        {
+            Vector3 verticalMomentum = Vector3.zero;
+            Vector3 horizontalMomentum = Vector3.zero;
+
+            if(this.momentum != Vector3.zero)
+            {
+                verticalMomentum = VectorMath.ExtractDotVector(this.momentum, this.locomotionDriver.transform.up);
+                horizontalMomentum = this.momentum - verticalMomentum;
+            }
+
+            verticalMomentum += this.locomotionDriver.transform.up * gravity * Time.fixedDeltaTime;
+
+            if (Mathf.Approximately(this.character.characterState.isGrounded, 1.0f))
+            {
+                verticalMomentum = Vector3.zero;
+            }
+
+            this.momentum = horizontalMomentum + verticalMomentum;
         }
 
         private void UpdateVerticalSpeed(bool isGrounded)

@@ -1,121 +1,133 @@
 ﻿namespace GameCreator.Characters
 {
-	using System.IO;
-	using System.Collections;
-	using System.Collections.Generic;
-	using UnityEngine;
-	using UnityEngine.AI;
-	using UnityEditor;
-	using GameCreator.Core;
+  using System.IO;
+  using System.Collections;
+  using System.Collections.Generic;
+  using UnityEngine;
+  using UnityEngine.AI;
+  using UnityEditor;
+  using GameCreator.Core;
 
-	[CustomEditor(typeof(PlayerCharacter))]
-	public class PlayerCharacterEditor : CharacterEditor 
-	{
-		private const string PLAYER_PREFAB_PATH = "Assets/Plugins/GameCreator/Characters/Prefabs/Player.prefab";
-		private const string SECTION_INPUT = "Player Input";
+  [CustomEditor(typeof(PlayerCharacter))]
+  public class PlayerCharacterEditor : CharacterEditor
+  {
+    private const string PLAYER_PREFAB_PATH = "Assets/Plugins/GameCreator/Characters/Prefabs/Player.prefab";
+    private const string SECTION_INPUT = "Player Input";
 
-		private const string PROP_INPUTT = "inputType";
-		private const string PROP_MOUSEB = "mouseButtonMove";
-        private const string PROP_LAYERM = "mouseLayerMask";
-        private const string PROP_INVERT = "invertAxis";
-        private const string PROP_INPUT_JMP = "jumpKey";
+    private const string PROP_INPUTT = "inputType";
+    private const string PROP_MOUSEB = "mouseButtonMove";
+    private const string PROP_LAYERM = "mouseLayerMask";
+    private const string PROP_INVERT = "invertAxis";
+    private const string PROP_INPUT_JMP = "jumpKey";
+    public const string PROP_JUMP_MOMENTUM_INITIAL = "jumpMomentumInitial";
+    public const string PROP_JUMP_MOMENTUM_POST = "jumpMomentumPost";
+    public const string PROP_JUMP_POST_MOMENTUM_DURATION_S = "jumpMomentumPostDurationSeconds";
 
-		// PROPERTIES: ----------------------------------------------------------------------------
+    // PROPERTIES: ----------------------------------------------------------------------------
 
-		private Section sectionInput;
-		private SerializedProperty spInputType;
-		private SerializedProperty spMouseButtonMove;
-        private SerializedProperty spMouseLayerMask;
-        private SerializedProperty spInvertAxis;
-		private SerializedProperty spInputJump;
+    private Section sectionInput;
+    private SerializedProperty spInputType;
+    private SerializedProperty spMouseButtonMove;
+    private SerializedProperty spMouseLayerMask;
+    private SerializedProperty spInvertAxis;
+    private SerializedProperty spInputJump;
+    private SerializedProperty spJumpMomentumInitial;
+    private SerializedProperty spJumpMomentumPost;
+    private SerializedProperty spJumpMomentumPostDurationSeconds;
 
-		// INITIALIZERS: --------------------------------------------------------------------------
+    // INITIALIZERS: --------------------------------------------------------------------------
 
-		protected new void OnEnable()
-		{
-			base.OnEnable();
+    protected new void OnEnable()
+    {
+      base.OnEnable();
 
-			string iconInputPath = Path.Combine(CHARACTER_ICONS_PATH, "PlayerInput.png");
-			Texture2D iconInput = AssetDatabase.LoadAssetAtPath<Texture2D>(iconInputPath);
-			this.sectionInput = new Section(SECTION_INPUT, iconInput, this.Repaint);
+      string iconInputPath = Path.Combine(CHARACTER_ICONS_PATH, "PlayerInput.png");
+      Texture2D iconInput = AssetDatabase.LoadAssetAtPath<Texture2D>(iconInputPath);
+      this.sectionInput = new Section(SECTION_INPUT, iconInput, this.Repaint);
 
-			this.spInputType = serializedObject.FindProperty(PROP_INPUTT);
-			this.spMouseButtonMove = serializedObject.FindProperty(PROP_MOUSEB);
-            this.spMouseLayerMask = serializedObject.FindProperty(PROP_LAYERM);
-            this.spInvertAxis = serializedObject.FindProperty(PROP_INVERT);
-            this.spInputJump = serializedObject.FindProperty(PROP_INPUT_JMP);
+      this.spInputType = serializedObject.FindProperty(PROP_INPUTT);
+      this.spMouseButtonMove = serializedObject.FindProperty(PROP_MOUSEB);
+      this.spMouseLayerMask = serializedObject.FindProperty(PROP_LAYERM);
+      this.spInvertAxis = serializedObject.FindProperty(PROP_INVERT);
+      this.spInputJump = serializedObject.FindProperty(PROP_INPUT_JMP);
+      this.spJumpMomentumInitial = serializedObject.FindProperty(PROP_JUMP_MOMENTUM_INITIAL);
+      this.spJumpMomentumPost = serializedObject.FindProperty(PROP_JUMP_MOMENTUM_POST);
+      this.spJumpMomentumPostDurationSeconds = serializedObject.FindProperty(PROP_JUMP_POST_MOMENTUM_DURATION_S);
 
+      if (this.spMouseLayerMask.intValue == 0)
+      {
+        this.spMouseLayerMask.intValue = ~0;
+      }
+    }
+
+    protected new void OnDisable()
+    {
+      base.OnDisable();
+    }
+
+    // INSPECTOR GUI: -------------------------------------------------------------------------
+
+    public override void OnInspectorGUI()
+    {
+      serializedObject.Update();
+      EditorGUILayout.Space();
+
+      base.PaintInspector();
+      this.sectionInput.PaintSection();
+      using (var group = new EditorGUILayout.FadeGroupScope(this.sectionInput.state.faded))
+      {
+        if (group.visible)
+        {
+          EditorGUILayout.BeginVertical(CoreGUIStyles.GetBoxExpanded());
+
+          EditorGUILayout.PropertyField(this.spInputType);
+          EditorGUI.indentLevel++;
+
+          if (this.spInputType.intValue == (int)PlayerCharacter.INPUT_TYPE.PointAndClick ||
+                        this.spInputType.intValue == (int)PlayerCharacter.INPUT_TYPE.FollowPointer)
+          {
+            EditorGUILayout.PropertyField(this.spMouseButtonMove);
+          }
+
+          if (this.spInputType.intValue == (int)PlayerCharacter.INPUT_TYPE.PointAndClick)
+          {
+            EditorGUILayout.PropertyField(this.spMouseLayerMask);
             if (this.spMouseLayerMask.intValue == 0)
             {
-                this.spMouseLayerMask.intValue = ~0;
+              this.spMouseLayerMask.intValue = ~0;
             }
-		}
+          }
 
-		protected new void OnDisable()
-		{
-			base.OnDisable();
-		}
+          if (this.spInputType.intValue == (int)PlayerCharacter.INPUT_TYPE.SideScrollX ||
+              this.spInputType.intValue == (int)PlayerCharacter.INPUT_TYPE.SideScrollZ)
+          {
+            EditorGUILayout.PropertyField(this.spInvertAxis);
+          }
 
-		// INSPECTOR GUI: -------------------------------------------------------------------------
+          EditorGUI.indentLevel--;
+          EditorGUILayout.PropertyField(this.spInputJump);
+          EditorGUILayout.PropertyField(this.spJumpMomentumInitial);
+          EditorGUILayout.PropertyField(this.spJumpMomentumPost);
+          EditorGUILayout.PropertyField(this.spJumpMomentumPostDurationSeconds);
+          EditorGUILayout.EndVertical();
+        }
+      }
 
-		public override void OnInspectorGUI ()
-		{
-			serializedObject.Update();
-			EditorGUILayout.Space();
+      EditorGUILayout.Space();
+      serializedObject.ApplyModifiedProperties();
+    }
 
-			base.PaintInspector();
-			this.sectionInput.PaintSection();
-			using (var group = new EditorGUILayout.FadeGroupScope (this.sectionInput.state.faded))
-			{
-				if (group.visible)
-				{
-					EditorGUILayout.BeginVertical(CoreGUIStyles.GetBoxExpanded());
+    // MENU ITEM: -----------------------------------------------------------------------------
 
-					EditorGUILayout.PropertyField(this.spInputType);
-                    EditorGUI.indentLevel++;
+    [MenuItem("GameObject/Game Creator/Characters/Player", false, 0)]
+    public static void CreatePlayer()
+    {
+      GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PLAYER_PREFAB_PATH);
+      if (prefab == null) return;
 
-					if (this.spInputType.intValue == (int)PlayerCharacter.INPUT_TYPE.PointAndClick ||
-                        this.spInputType.intValue == (int)PlayerCharacter.INPUT_TYPE.FollowPointer)
-					{
-						EditorGUILayout.PropertyField(this.spMouseButtonMove);
-					}
-
-                    if (this.spInputType.intValue == (int)PlayerCharacter.INPUT_TYPE.PointAndClick)
-                    {
-                        EditorGUILayout.PropertyField(this.spMouseLayerMask);
-                        if (this.spMouseLayerMask.intValue == 0)
-                        {
-                            this.spMouseLayerMask.intValue = ~0;
-                        }
-                    }
-
-                    if (this.spInputType.intValue == (int)PlayerCharacter.INPUT_TYPE.SideScrollX ||
-                        this.spInputType.intValue == (int)PlayerCharacter.INPUT_TYPE.SideScrollZ)
-                    {
-                        EditorGUILayout.PropertyField(this.spInvertAxis);
-                    }
-
-                    EditorGUI.indentLevel--;
-					EditorGUILayout.PropertyField(this.spInputJump);
-					EditorGUILayout.EndVertical();
-				}
-			}
-
-			EditorGUILayout.Space();
-			serializedObject.ApplyModifiedProperties();
-		}
-
-		// MENU ITEM: -----------------------------------------------------------------------------
-
-		[MenuItem("GameObject/Game Creator/Characters/Player", false, 0)]
-		public static void CreatePlayer()
-		{
-			GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PLAYER_PREFAB_PATH);
-			if (prefab == null) return;
-
-            GameObject instance = Instantiate(prefab);
-            instance.name = prefab.name;
-			instance = CreateSceneObject.Create(instance, true);
-		}
-	}
+      GameObject instance = Instantiate(prefab);
+      instance.name = prefab.name;
+      instance = CreateSceneObject.Create(instance, true);
+    }
+  }
 }

@@ -44,8 +44,8 @@
 
             this.characterLocomotion.locomotionDriver.transform.rotation = targetRotation;
 
-            // Vector3 targetDirection = Vector3.up * this.characterLocomotion.verticalSpeed;
-            this.characterLocomotion.locomotionDriver.SetVelocity(Vector3.zero);
+            Vector3 targetDirection = this.characterLocomotion.GetMomentum();
+            this.characterLocomotion.locomotionDriver.SetVelocity(targetDirection);
 
             if (this.characterLocomotion.navmeshAgent != null &&
                 this.characterLocomotion.navmeshAgent.isActiveAndEnabled)

@@ -36,7 +36,7 @@
             targetDirection *= speed;
 
             if (this.isSliding) targetDirection = this.slideDirection;
-            // targetDirection += Vector3.up * this.characterLocomotion.verticalSpeed;
+            targetDirection += this.characterLocomotion.GetMomentum();
 
             if (this.isDashing)
             {
