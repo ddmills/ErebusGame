@@ -4459,10 +4459,10 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   invertAxis: 0
-  jumpKey: 32
-  jumpMomentumInitial: 5
-  jumpMomentumPost: 0.6
-  jumpMomentumPostDurationSeconds: 0.2
+  jumpKey: Jump
+  jumpMomentumInitial: 5.5
+  jumpMomentumPost: 0.125
+  jumpMomentumPostDurationSeconds: 1
 --- !u!114 &2995341578765770285
 MonoBehaviour:
   m_ObjectHideFlags: 0

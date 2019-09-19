@@ -44,7 +44,7 @@
         public LayerMask mouseLayerMask = ~0;
         public bool invertAxis = false;
 
-        public KeyCode jumpKey = KeyCode.Space;
+        public string jumpKey = "Jump";
         public float jumpMomentumInitial = 15f;
         public float jumpMomentumPost = 1f;
         public float jumpMomentumPostDurationSeconds = 5;
@@ -86,7 +86,7 @@
         // UPDATE: --------------------------------------------------------------------------------
         private void Update()
         {
-            if (Input.GetKeyDown(this.jumpKey) && this.IsControllable())
+            if (Input.GetButtonDown(this.jumpKey) && this.IsControllable())
             {
                 if (this.IsGrounded())
                 {
@@ -111,7 +111,7 @@
 
             if (this.IsControllable())
             {
-                if (Input.GetKey(this.jumpKey))
+                if (Input.GetButton(this.jumpKey))
                 {
                     float currentJumpDurationSeconds = Time.fixedTime - this.currentJumpDurationStartTime;
 
