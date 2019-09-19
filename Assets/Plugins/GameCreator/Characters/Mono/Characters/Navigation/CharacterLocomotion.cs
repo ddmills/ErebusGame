@@ -21,7 +21,7 @@
 
         public enum LOCOMOTION_SYSTEM
         {
-            CharacterController,
+            LocomotionDriver,
             NavigationMeshAgent
         }
 
@@ -92,11 +92,13 @@
         private float lastGroundTime = 0f;
         private float lastJumpTime = 0f;
         private int jumpChain = 0;
+        private Vector3 momentum = Vector3.zero;
+        private Vector3 lastSavedVelocity = Vector3.zero;
 
         [HideInInspector] public Character character;
 
         [HideInInspector] public ANIM_CONSTRAINT animatorConstraint = ANIM_CONSTRAINT.NONE;
-        [HideInInspector] public CharacterController characterController;
+        [HideInInspector] public ILocomotionDriver locomotionDriver;
         [HideInInspector] public NavMeshAgent navmeshAgent;
 
         public LOCOMOTION_SYSTEM currentLocomotionType { get; private set; }
@@ -110,10 +112,11 @@
             this.lastJumpTime = Time.time;
 
             this.character = character;
-            this.characterController = this.character.GetComponent<CharacterController>();
+            this.locomotionDriver = this.character.GetComponent<ILocomotionDriver>();
 
-            this.currentLocomotionType = LOCOMOTION_SYSTEM.CharacterController;
+            this.currentLocomotionType = LOCOMOTION_SYSTEM.LocomotionDriver;
 
+            this.locomotionDriver.Setup(this.character);
             this.GenerateNavmeshAgent();
             this.SetDirectionalDirection(Vector3.zero);
         }
@@ -122,28 +125,20 @@
 
         public void Update()
         {
-            this.currentLocomotionType = LOCOMOTION_SYSTEM.CharacterController;
-
-            if (this.currentLocomotionSystem != null)
-            {
-                this.currentLocomotionType = this.currentLocomotionSystem.Update();
-            }
-
-            switch (this.currentLocomotionType)
-            {
-                case LOCOMOTION_SYSTEM.CharacterController:
-                    this.UpdateVerticalSpeed(this.characterController.isGrounded);
-                    break;
-
-                case LOCOMOTION_SYSTEM.NavigationMeshAgent:
-                    this.UpdateVerticalSpeed(!this.navmeshAgent.isOnOffMeshLink);
-                    break;
-            }
-
             this.UpdateCharacterState(this.currentLocomotionType);
+            this.locomotionDriver.SetExtendSensorRange(this.character.IsGrounded());
+            this.HandleGravity();
+
+            this.currentLocomotionType = this.currentLocomotionSystem.Update();
+            this.lastSavedVelocity = this.locomotionDriver.GetVelocity();
         }
 
         // PUBLIC METHODS: ------------------------------------------------------------------------
+
+        public void AddMomentum(Vector3 value)
+        {
+            this.momentum += value;
+        }
 
         public void Dash(Vector3 direction, float impulse, float duration, float drag)
         {
@@ -158,42 +153,37 @@
 
         public int Jump(float jumpForce)
         {
-            bool isGrounded = (
-                this.characterController.isGrounded ||
-                Time.time < this.lastGroundTime + JUMP_COYOTE_TIME
-            );
+            // bool isGrounded = (
+            //     this.characterController.isGrounded ||
+            //     Time.time < this.lastGroundTime + JUMP_COYOTE_TIME
+            // );
 
-            bool jumpDelay = this.lastJumpTime + this.timeBetweenJumps < Time.time;
-            bool jumpNumber = isGrounded || this.jumpChain < this.jumpTimes;
-            if (this.canJump && jumpNumber && jumpDelay)
-            {
-                this.verticalSpeed = jumpForce;
-                this.lastJumpTime = Time.time;
-                if (this.character.onJump != null)
-                {
-                    this.character.onJump.Invoke(this.jumpChain);
-                }
+            // bool jumpDelay = this.lastJumpTime + this.timeBetweenJumps < Time.time;
+            // bool jumpNumber = isGrounded || this.jumpChain < this.jumpTimes;
+            // if (this.canJump && jumpNumber && jumpDelay)
+            // {
+            //     this.verticalSpeed = jumpForce;
+            //     this.lastJumpTime = Time.time;
+            //     if (this.character.onJump != null)
+            //     {
+            //         this.character.onJump.Invoke(this.jumpChain);
+            //     }
 
-                this.jumpChain++;
+            //     this.jumpChain++;
 
-                return this.jumpChain;
-            }
+            //     return this.jumpChain;
+            // }
 
             return -1;
         }
 
         public void Teleport(Vector3 position)
         {
-            switch (this.currentLocomotionType)
-            {
-                case CharacterLocomotion.LOCOMOTION_SYSTEM.CharacterController:
-                    this.character.transform.position = position;
-                    break;
+            this.character.transform.position = position;
 
-                case CharacterLocomotion.LOCOMOTION_SYSTEM.NavigationMeshAgent:
-                    this.character.transform.position = position;
-                    this.character.characterLocomotion.navmeshAgent.Warp(position);
-                    break;
+            if (this.currentLocomotionType == CharacterLocomotion.LOCOMOTION_SYSTEM.NavigationMeshAgent)
+            {
+                this.character.characterLocomotion.navmeshAgent.Warp(position);
             }
         }
 
@@ -204,10 +194,9 @@
 
         public void ChangeHeight(float height)
         {
-            if (this.characterController != null)
+            if (this.locomotionDriver != null)
             {
-                this.characterController.height = height;
-                this.characterController.center = Vector3.up * (height / 2.0f);
+                this.locomotionDriver.SetHeight(height);
             }
 
             if (this.navmeshAgent != null)
@@ -233,6 +222,60 @@
         public Vector3 GetMovementDirection()
         {
             return this.currentLocomotionSystem.movementDirection;
+        }
+
+        private void OnGroundContactLost()
+        {
+            Vector3 currentVelocity = this.lastSavedVelocity;
+
+             //Remove all vertical parts of 'currentVelocity';
+            currentVelocity = VectorMath.RemoveDotVector(currentVelocity, this.locomotionDriver.transform.up);
+
+             //Calculate magnitude and direction from 'currentVelocity';
+            float magnitude = currentVelocity.magnitude;
+            Vector3 direction = Vector3.zero;
+
+             //Calculate velocity direction;
+            if (magnitude != 0f)
+            {
+                direction = currentVelocity / magnitude;
+            }
+
+             // TODO: Subtract from 'magnitude', based on 'movementSpeed' and 'airControl', check for overshooting;
+            // if (magnitude >= movementSpeed * airControl)
+            // {
+            //     magnitude -= movementSpeed * airControl;
+            // }
+            // else
+            // {
+            //     magnitude = 0f;
+            // }
+
+             // momentum = direction * magnitude;
+            momentum = Vector3.zero;
+        }
+
+         private void OnGroundContactRegained(Vector3 collisionVelocity)
+        {
+            if (this.character.onLand != null)
+            {
+                this.character.onLand.Invoke(this.momentum.y); // TODO: send vector3
+            }
+
+             this.momentum = Vector3.zero;
+        }
+
+         private bool IsRisingOrFalling()
+        {
+            Vector3 verticalMomentum = VectorMath.ExtractDotVector(this.momentum, this.locomotionDriver.transform.up);
+            float limit = 0.001f;
+
+             return verticalMomentum.magnitude > limit;
+        }
+
+         public Vector3 GetMomentum()
+        {
+            return this.momentum;
         }
 
         // PUBLIC LOCOMOTION METHODS: -------------------------------------------------------------
@@ -289,8 +332,8 @@
             this.navmeshAgent.updatePosition = false;
             this.navmeshAgent.updateRotation = false;
             this.navmeshAgent.updateUpAxis = false;
-            this.navmeshAgent.radius = this.characterController.radius;
-            this.navmeshAgent.height = this.characterController.height;
+            this.navmeshAgent.radius = this.locomotionDriver.GetRadius();
+            this.navmeshAgent.height = this.locomotionDriver.GetHeight();
             this.navmeshAgent.acceleration = this.acceleration;
         }
 
@@ -303,44 +346,101 @@
             this.currentLocomotionSystem.Setup(this);
         }
 
-        private void UpdateVerticalSpeed(bool isGrounded)
+        private void HandleGravity()
         {
-            this.verticalSpeed += (this.gravity * Time.deltaTime);
-            if (isGrounded)
-            {
-                if (Time.time - this.lastGroundTime > JUMP_COYOTE_TIME &&
-                    this.character.onLand != null)
-                {
-                    this.character.onLand.Invoke(this.verticalSpeed);
-                }
+            Vector3 verticalMomentum = Vector3.zero;
+            Vector3 horizontalMomentum = Vector3.zero;
 
-                this.jumpChain = 0;
-                this.lastGroundTime = Time.time;
-                this.verticalSpeed = Mathf.Max(this.verticalSpeed, MAX_GROUND_VSPEED);
+            if(this.momentum != Vector3.zero)
+            {
+                verticalMomentum = VectorMath.ExtractDotVector(this.momentum, this.locomotionDriver.transform.up);
+                horizontalMomentum = this.momentum - verticalMomentum;
             }
 
-            this.verticalSpeed = Mathf.Max(this.verticalSpeed, this.maxFallSpeed);
+            verticalMomentum += this.locomotionDriver.transform.up * gravity * Time.fixedDeltaTime;
+
+            if (this.character.IsGrounded())
+            {
+                verticalMomentum = Vector3.zero;
+            }
+
+            this.momentum = horizontalMomentum + verticalMomentum;
+        }
+
+        private Vector3 GetVelocity()
+        {
+            return this.lastSavedVelocity;
         }
 
         private void UpdateCharacterState(LOCOMOTION_SYSTEM locomotionSystem)
         {
+            bool isRising = IsRisingOrFalling() && (VectorMath.GetDotProduct(this.momentum, this.locomotionDriver.transform.up) > 0f);
+
+             switch (this.character.characterState.locomotionState)
+            {
+                case Character.LocomotionState.Grounded:
+                    if (isRising)
+                    {
+                        this.character.characterState.locomotionState = Character.LocomotionState.Rising;
+                        break;
+                    }
+                    if (!this.locomotionDriver.IsGrounded())
+                    {
+                        this.character.characterState.locomotionState = Character.LocomotionState.Falling;
+                        OnGroundContactLost();
+                        break;
+                    }
+                    break;
+                case Character.LocomotionState.Falling:
+                    if (isRising)
+                    {
+                        this.character.characterState.locomotionState = Character.LocomotionState.Rising;
+                        break;
+                    }
+                    if (this.locomotionDriver.IsGrounded())
+                    {
+                        this.character.characterState.locomotionState = Character.LocomotionState.Grounded;
+                        OnGroundContactRegained(momentum);
+                        break;
+                    }
+                    break;
+                case Character.LocomotionState.Rising:
+                    if (!isRising)
+                    {
+                        if (this.locomotionDriver.IsGrounded())
+                        {
+                            this.character.characterState.locomotionState = Character.LocomotionState.Grounded;
+                            OnGroundContactRegained(momentum);
+                        }
+                        else
+                        {
+                            this.character.characterState.locomotionState = Character.LocomotionState.Falling;
+                        }
+                    }
+                    break;
+                default:
+                    this.character.characterState.locomotionState = Character.LocomotionState.Falling;
+                    break;
+            }
+
+            // TODO cleanup
             Vector3 worldVelocity = Vector3.zero;
             bool isSliding = this.currentLocomotionSystem.isSliding;
             bool isGrounded = true;
 
             switch (locomotionSystem)
             {
-                case LOCOMOTION_SYSTEM.CharacterController:
-                    worldVelocity = this.characterController.velocity;
+                case LOCOMOTION_SYSTEM.LocomotionDriver:
+                    worldVelocity = this.locomotionDriver.GetVelocity();
                     isGrounded = (
-                        this.characterController.isGrounded ||
+                        this.locomotionDriver.IsGrounded() ||
                         Time.time - this.lastGroundTime < GROUND_TIME_OFFSET
                     );
                     break;
 
                 case LOCOMOTION_SYSTEM.NavigationMeshAgent:
                     worldVelocity = (this.navmeshAgent.velocity == Vector3.zero
-                        ? this.characterController.velocity
+                        ? this.locomotionDriver.GetVelocity()
                         : this.navmeshAgent.velocity
                     );
                     isGrounded = (

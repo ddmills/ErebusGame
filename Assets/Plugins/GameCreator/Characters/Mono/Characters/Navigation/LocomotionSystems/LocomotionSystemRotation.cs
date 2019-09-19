@@ -7,7 +7,7 @@
 	using GameCreator.Core.Hooks;
     using UnityEditor;
 
-    public class LocomotionSystemRotation : ILocomotionSystem 
+    public class LocomotionSystemRotation : ILocomotionSystem
 	{
         private const float ERROR_MARGIN = 0.1f;
 
@@ -28,7 +28,7 @@
 			}
 
             Quaternion targetRotation = this.UpdateRotation(this.desiredDirection);
-            Transform charTransform = this.characterLocomotion.characterController.transform;
+            Transform charTransform = this.characterLocomotion.locomotionDriver.transform;
 
             Vector3 charForward = charTransform.TransformDirection(Vector3.forward);
             Vector3 charRight = charTransform.TransformDirection(Vector3.right);
@@ -42,18 +42,18 @@
                 if (difference < 0f) this.pivotSpeed = this.pivotSpeed >= 0 ? 1f : -1f;
             }
 
-            this.characterLocomotion.characterController.transform.rotation = targetRotation;
+            this.characterLocomotion.locomotionDriver.transform.rotation = targetRotation;
 
-            Vector3 targetDirection = Vector3.up * this.characterLocomotion.verticalSpeed;
-            this.characterLocomotion.characterController.Move(targetDirection);
+            Vector3 targetDirection = this.characterLocomotion.GetMomentum();
+            this.characterLocomotion.locomotionDriver.SetVelocity(targetDirection);
 
-            if (this.characterLocomotion.navmeshAgent != null && 
+            if (this.characterLocomotion.navmeshAgent != null &&
                 this.characterLocomotion.navmeshAgent.isActiveAndEnabled)
 			{
                 this.characterLocomotion.navmeshAgent.enabled = false;
             }
 
-            return CharacterLocomotion.LOCOMOTION_SYSTEM.CharacterController;
+            return CharacterLocomotion.LOCOMOTION_SYSTEM.LocomotionDriver;
 		}
 
         public override void OnDestroy ()

@@ -20,21 +20,10 @@
             Character _character = this.character.GetCharacter(target);
             if (_character == null) return true;
 
-            CharacterLocomotion locomotion = _character.characterLocomotion;
-            CharacterController controller = locomotion.characterController;
+            ILocomotionDriver locomotionDriver = _character.characterLocomotion.locomotionDriver;
 
-            switch (this.mounted)
-            {
-                case true:
-                    _character.enabled = false;
-                    if (controller != null) controller.detectCollisions = false;
-                    break;
-
-                case false:
-                    if (controller != null) controller.detectCollisions = true;
-                    _character.enabled = true;
-                    break;
-            }
+            _character.enabled = !this.mounted;
+            locomotionDriver.SetCollisionDetection(!this.mounted);
 
             return true;
         }

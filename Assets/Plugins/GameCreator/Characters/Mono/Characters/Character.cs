@@ -1,198 +1,207 @@
 ﻿namespace GameCreator.Characters
 {
-    using System.Collections;
-    using System.Collections.Generic;
-    using UnityEngine;
-    using UnityEngine.Events;
-    using UnityEngine.AI;
-    using UnityEngine.SceneManagement;
-    using GameCreator.Core;
-    using System;
+	using System.Collections;
+	using System.Collections.Generic;
+	using UnityEngine;
+	using UnityEngine.Events;
+	using UnityEngine.AI;
+	using UnityEngine.SceneManagement;
+	using GameCreator.Core;
+	using System;
 
-    [RequireComponent(typeof(CharacterController))]
+	[RequireComponent(typeof(ILocomotionDriver))]
 	[AddComponentMenu("Game Creator/Characters/Character", 100)]
-    public class Character : GlobalID, IGameSave
+	public class Character : GlobalID, IGameSave
 	{
+        public enum LocomotionState
+        {
+            Grounded,
+            Falling,
+            Rising
+        }
+
 		[System.Serializable]
-		public class State
+		public class State // TODO: cleanup!
 		{
 			public Vector3 forwardSpeed;
 			public float sidesSpeed;
-            public float pivotSpeed;
-            public bool targetLock;
+			public float pivotSpeed;
+			public bool targetLock;
 			public float isGrounded;
-            public float isSliding;
-            public float isDashing;
+			public float isSliding;
+			public float isDashing;
 			public float verticalSpeed;
 			public Vector3 normal;
+			public LocomotionState locomotionState;
 
 			public State()
 			{
 				this.forwardSpeed = Vector3.zero;
 				this.sidesSpeed = 0f;
-                this.targetLock = false;
+				this.targetLock = false;
 				this.isGrounded = 1.0f;
-                this.isSliding = 0.0f;
-                this.isDashing = 0.0f;
-                this.verticalSpeed = 0f;
+				this.isSliding = 0.0f;
+				this.isDashing = 0.0f;
+				this.verticalSpeed = 0f;
 				this.normal = Vector3.zero;
+				this.locomotionState = LocomotionState.Grounded;
 			}
 		}
 
-        [Serializable]
-        public class SaveData
-        {
-            public Vector3 position = Vector3.zero;
-            public Quaternion rotation = Quaternion.identity;
-        }
+		[Serializable]
+		public class SaveData
+		{
+			public Vector3 position = Vector3.zero;
+			public Quaternion rotation = Quaternion.identity;
+		}
 
-        [Serializable]
-        public class OnLoadSceneData
-        {
-            public bool active { get; private set; }
-            public Vector3 position { get; private set; }
-            public Quaternion rotation { get; private set; }
+		[Serializable]
+		public class OnLoadSceneData
+		{
+			public bool active { get; private set; }
+			public Vector3 position { get; private set; }
+			public Quaternion rotation { get; private set; }
 
-            public OnLoadSceneData(Vector3 position, Quaternion rotation)
-            {
-                this.active = true;
-                this.position = position;
-                this.rotation = rotation;
-            }
+			public OnLoadSceneData(Vector3 position, Quaternion rotation)
+			{
+				this.active = true;
+				this.position = position;
+				this.rotation = rotation;
+			}
 
-            public void Consume()
-            {
-                this.active = false;
-            }
-        }
+			public void Consume()
+			{
+				this.active = false;
+			}
+		}
 
-        public class LandEvent : UnityEvent<float> { }
-        public class JumpEvent : UnityEvent<int> { }
-        public class DashEvent : UnityEvent { }
-        public class StepEvent : UnityEvent<CharacterLocomotion.STEP> { }
-        public class IsControllableEvent : UnityEvent<bool> { }
+		public class LandEvent : UnityEvent<float> { }
+		public class JumpEvent : UnityEvent<int> { }
+		public class DashEvent : UnityEvent { }
+		public class StepEvent : UnityEvent<CharacterLocomotion.STEP> { }
+		public class IsControllableEvent : UnityEvent<bool> { }
 
-        protected const string ERR_NOCAM = "No Main Camera found.";
+		protected const string ERR_NOCAM = "No Main Camera found.";
 
 		// PROPERTIES: ----------------------------------------------------------------------------
 
 		public CharacterLocomotion characterLocomotion;
 
 		public State characterState = new State();
-        private CharacterAnimator animator;
-        private CharacterRagdoll ragdoll;
+		private CharacterAnimator animator;
+		private CharacterRagdoll ragdoll;
 
-        public JumpEvent onJump = new JumpEvent();
-        public LandEvent onLand = new LandEvent();
-        public DashEvent onDash = new DashEvent();
-        public StepEvent onStep = new StepEvent();
+		public JumpEvent onJump = new JumpEvent();
+		public LandEvent onLand = new LandEvent();
+		public DashEvent onDash = new DashEvent();
+		public StepEvent onStep = new StepEvent();
 
-        public IsControllableEvent onIsControllable = new IsControllableEvent();
+		public IsControllableEvent onIsControllable = new IsControllableEvent();
 
-        public bool save = false;
-        protected SaveData initSaveData = new SaveData();
+		public bool save = false;
+		protected SaveData initSaveData = new SaveData();
 
 		// INITIALIZERS: --------------------------------------------------------------------------
 
-        protected override void Awake()
+		protected override void Awake()
 		{
-            base.Awake();
+			base.Awake();
 
-            if (!Application.isPlaying) return;
+			if (!Application.isPlaying) return;
 			this.CharacterAwake();
 
-            this.initSaveData = new SaveData()
-            {
-                position = transform.position,
-                rotation = transform.rotation,
-            };
+			this.initSaveData = new SaveData()
+			{
+				position = transform.position,
+				rotation = transform.rotation,
+			};
 
-            if (this.save)
-            {
-                SaveLoadManager.Instance.Initialize(this);
-            }
+			if (this.save)
+			{
+				SaveLoadManager.Instance.Initialize(this);
+			}
 		}
 
 		protected void CharacterAwake()
 		{
-            if (!Application.isPlaying) return;
+			if (!Application.isPlaying) return;
 			this.animator = GetComponent<CharacterAnimator>();
 			this.characterLocomotion.Setup(this);
 
-            if (this.animator != null && this.animator.autoInitializeRagdoll)
-            {
-                this.InitializeRagdoll();
-            }
+			if (this.animator != null && this.animator.autoInitializeRagdoll)
+			{
+				this.InitializeRagdoll();
+			}
 		}
 
-        protected void OnDestroy()
-        {
-            this.OnDestroyGID();
-            if (!Application.isPlaying) return;
-
-            if (this.save && !this.exitingApplication)
-            {
-                SaveLoadManager.Instance.OnDestroyIGameSave(this);
-            }
-        }
-
-        // UPDATE: --------------------------------------------------------------------------------
-
-        private void Update()
+		protected void OnDestroy()
 		{
-            if (!Application.isPlaying) return;
-            this.CharacterUpdate();
+			this.OnDestroyGID();
+			if (!Application.isPlaying) return;
+
+			if (this.save && !this.exitingApplication)
+			{
+				SaveLoadManager.Instance.OnDestroyIGameSave(this);
+			}
+		}
+
+		// UPDATE: --------------------------------------------------------------------------------
+
+		private void FixedUpdate()
+		{
+			if (!Application.isPlaying) return;
+			this.CharacterUpdate();
 		}
 
 		protected void CharacterUpdate()
 		{
-            if (this.ragdoll != null && this.ragdoll.GetState() != CharacterRagdoll.State.Normal) return;
-            this.characterLocomotion.Update();
+			if (this.ragdoll != null && this.ragdoll.GetState() != CharacterRagdoll.State.Normal) return;
+			this.characterLocomotion.Update();
 		}
 
-        private void LateUpdate()
-        {
-            if (!Application.isPlaying) return;
-            if (this.ragdoll != null && this.ragdoll.GetState() != CharacterRagdoll.State.Normal)
-            {
-                this.ragdoll.Update();
-            }
-        }
+		private void LateUpdate()
+		{
+			if (!Application.isPlaying) return;
+			if (this.ragdoll != null && this.ragdoll.GetState() != CharacterRagdoll.State.Normal)
+			{
+				this.ragdoll.Update();
+			}
+		}
 
-        // PUBLIC METHODS: ------------------------------------------------------------------------
+		// PUBLIC METHODS: ------------------------------------------------------------------------
 
-        public State GetCharacterState()
+		public State GetCharacterState()
 		{
 			return this.characterState;
 		}
 
-        public void SetRagdoll(bool active, bool autoStand = false)
-        {
-            if (active && this.ragdoll.GetState() != CharacterRagdoll.State.Normal) return;
-            if (!active && this.ragdoll.GetState() == CharacterRagdoll.State.Normal) return;
+		public void SetRagdoll(bool active, bool autoStand = false)
+		{
+			if (active && this.ragdoll.GetState() != CharacterRagdoll.State.Normal) return;
+			if (!active && this.ragdoll.GetState() == CharacterRagdoll.State.Normal) return;
 
-            this.characterLocomotion.characterController.detectCollisions = !active;
-            this.animator.animator.enabled = !active;
+			this.characterLocomotion.locomotionDriver.SetCollisionDetection(!active);
+			this.animator.animator.enabled = !active;
 
-            Transform model = this.animator.animator.transform;
-            switch (active)
-            {
-                case true:
-                    this.ragdoll.Ragdoll(true, autoStand);
-                    model.SetParent(null, true);
-                    break;
+			Transform model = this.animator.animator.transform;
+			switch (active)
+			{
+				case true:
+					this.ragdoll.Ragdoll(true, autoStand);
+					model.SetParent(null, true);
+					break;
 
-                case false:
-                    model.SetParent(transform, true);
-                    this.ragdoll.Ragdoll(false, autoStand);
-                    break;
-            }
-        }
+				case false:
+					model.SetParent(transform, true);
+					this.ragdoll.Ragdoll(false, autoStand);
+					break;
+			}
+		}
 
-        public void InitializeRagdoll()
-        {
-            this.ragdoll = new CharacterRagdoll(this);
-        }
+		public void InitializeRagdoll()
+		{
+			this.ragdoll = new CharacterRagdoll(this);
+		}
 
 		// GETTERS: -------------------------------------------------------------------------------
 
@@ -202,49 +211,54 @@
 			return this.characterLocomotion.isControllable;
 		}
 
-        public bool IsRagdoll()
+		public bool IsRagdoll()
+		{
+			return (this.ragdoll != null && this.ragdoll.GetState() != CharacterRagdoll.State.Normal);
+		}
+
+		public int GetCharacterMotion()
+		{
+			if (this.characterState == null) return 0;
+			if (this.characterLocomotion == null) return 0;
+
+			float speed = Mathf.Abs(this.characterState.forwardSpeed.magnitude);
+			if (Mathf.Approximately(speed, 0.0f)) return 0;
+			else if (this.characterLocomotion.canRun && speed > this.characterLocomotion.runSpeed/2.0f)
+			{
+				return 2;
+			}
+
+			return 1;
+		}
+
+		public bool IsGrounded()
+		{
+			if (this.characterState == null) return true;
+			return this.characterState.locomotionState == LocomotionState.Grounded;
+		}
+
+		public CharacterAnimator GetCharacterAnimator()
+		{
+			return this.animator;
+		}
+
+		public void AddMomentum(Vector3 momentum)
         {
-            return (this.ragdoll != null && this.ragdoll.GetState() != CharacterRagdoll.State.Normal);
-        }
-
-        public int GetCharacterMotion()
-        {
-            if (this.characterState == null) return 0;
-            if (this.characterLocomotion == null) return 0;
-
-            float speed = Mathf.Abs(this.characterState.forwardSpeed.magnitude);
-            if (Mathf.Approximately(speed, 0.0f)) return 0;
-            else if (this.characterLocomotion.canRun && speed > this.characterLocomotion.runSpeed/2.0f)
-            {
-                return 2;
-            }
-
-            return 1;
-        }
-
-        public bool IsGrounded()
-        {
-            if (this.characterState == null) return true;
-            return Mathf.Approximately(this.characterState.isGrounded, 1.0f);
-        }
-
-        public CharacterAnimator GetCharacterAnimator()
-        {
-            return this.animator;
+            this.characterLocomotion.AddMomentum(momentum);
         }
 
 		// JUMP: ----------------------------------------------------------------------------------
 
-        public void Dash(Vector3 direction, float impulse, float duration, float drag = 10f)
-        {
-            this.characterLocomotion.Dash(direction, impulse, duration, drag);
-            if (this.animator != null) this.animator.Dash();
-        }
+		public void Dash(Vector3 direction, float impulse, float duration, float drag = 10f)
+		{
+			this.characterLocomotion.Dash(direction, impulse, duration, drag);
+			if (this.animator != null) this.animator.Dash();
+		}
 
 		public void Jump(float force)
 		{
-            int jumpChain = this.characterLocomotion.Jump(force);
-            if (jumpChain >= 0 && this.animator != null) 
+			int jumpChain = this.characterLocomotion.Jump(force);
+			if (jumpChain >= 0 && this.animator != null)
 			{
 				this.animator.Jump();
 			}
@@ -252,11 +266,11 @@
 
 		public void Jump()
 		{
-            int jumpChain = this.characterLocomotion.Jump();
-            if (jumpChain >= 0 && this.animator != null)
-            {
-                this.animator.Jump(jumpChain);
-            }
+			int jumpChain = this.characterLocomotion.Jump();
+			if (jumpChain >= 0 && this.animator != null)
+			{
+				this.animator.Jump(jumpChain);
+			}
 		}
 
 		// HEAD TRACKER: --------------------------------------------------------------------------
@@ -269,71 +283,71 @@
 
 		// FLOOR COLLISION: -----------------------------------------------------------------------
 
-		private void OnControllerColliderHit(ControllerColliderHit hit) 
+		private void OnControllerColliderHit(ControllerColliderHit hit)
 		{
-            if (!Application.isPlaying) return;
+			if (!Application.isPlaying) return;
 			Rigidbody hitRigidbody = hit.collider.attachedRigidbody;
 			if (hitRigidbody != null && !hitRigidbody.isKinematic)
 			{
 				Vector3 force = hit.controller.velocity * hitRigidbody.mass / Time.fixedDeltaTime;
-                hitRigidbody.AddForceAtPosition(force, hit.point, ForceMode.Force);
+				hitRigidbody.AddForceAtPosition(force, hit.point, ForceMode.Force);
 			}
 
-            if (Vector3.Angle(hit.normal, Vector3.up) >= 90f) return;
-            this.characterLocomotion.terrainNormal = hit.normal;
+			if (Vector3.Angle(hit.normal, Vector3.up) >= 90f) return;
+			this.characterLocomotion.terrainNormal = hit.normal;
 		}
 
-        // GIZMOS: --------------------------------------------------------------------------------
+		// GIZMOS: --------------------------------------------------------------------------------
 
-        private void OnDrawGizmos()
-        {
-            if (this.ragdoll != null) this.ragdoll.OnDrawGizmos();
-        }
+		private void OnDrawGizmos()
+		{
+			if (this.ragdoll != null) this.ragdoll.OnDrawGizmos();
+		}
 
-        // GAME SAVE: -----------------------------------------------------------------------------
+		// GAME SAVE: -----------------------------------------------------------------------------
 
-        public string GetUniqueName()
-        {
-            string uniqueName = string.Format(
-                "character:{0}",
-                this.GetUniqueCharacterID()
-            );
+		public string GetUniqueName()
+		{
+			string uniqueName = string.Format(
+				"character:{0}",
+				this.GetUniqueCharacterID()
+			);
 
-            return uniqueName;
-        }
+			return uniqueName;
+		}
 
-        protected virtual string GetUniqueCharacterID()
-        {
-            return this.GetID();
-        }
+		protected virtual string GetUniqueCharacterID()
+		{
+			return this.GetID();
+		}
 
-        public Type GetSaveDataType()
-        {
-            return typeof(SaveData);
-        }
+		public Type GetSaveDataType()
+		{
+			return typeof(SaveData);
+		}
 
-        public object GetSaveData()
-        {
-            return new SaveData()
-            {
-                position = transform.position,
-                rotation = transform.rotation
-            };
-        }
+		public object GetSaveData()
+		{
+			return new SaveData()
+			{
+				position = transform.position,
+				rotation = transform.rotation
+			};
+		}
 
-        public void ResetData()
-        {
-            transform.position = this.initSaveData.position;
-            transform.rotation = this.initSaveData.rotation;
-        }
+		public void ResetData()
+		{
+			transform.position = this.initSaveData.position;
+			transform.rotation = this.initSaveData.rotation;
+		}
 
-        public void OnLoad(object generic)
-        {
-            SaveData container = generic as SaveData;
-            if (container == null) return;
+		public void OnLoad(object generic)
+		{
+			SaveData container = generic as SaveData;
+			if (container == null) return;
 
-            transform.position = container.position;
-            transform.rotation = container.rotation;
-        }
-    }
+			transform.position = container.position;
+			transform.rotation = container.rotation;
+		}
+	}
 }

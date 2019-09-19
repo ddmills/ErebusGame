@@ -8,7 +8,7 @@
 	using GameCreator.Core;
 	using GameCreator.Core.Hooks;
 
-	public class LocomotionSystemFollow : ILocomotionSystem 
+	public class LocomotionSystemFollow : ILocomotionSystem
 	{
         // PROPERTIES: ----------------------------------------------------------------------------
 
@@ -27,8 +27,8 @@
             base.Update();
 
             Vector3 currPosition = this.characterLocomotion.character.transform.position;
-            float distance = (this.targetTransform != null 
-                ? Vector3.Distance(currPosition, this.targetTransform.position) 
+            float distance = (this.targetTransform != null
+                ? Vector3.Distance(currPosition, this.targetTransform.position)
                 : -1.0f
             );
 
@@ -36,7 +36,7 @@
             stopConditions |= (this.isFollowing && distance <= this.minRadius);
             stopConditions |= (!this.isFollowing && distance <= this.maxRadius);
 
-            if (stopConditions) 
+            if (stopConditions)
 			{
                 this.isFollowing = false;
 
@@ -52,12 +52,12 @@
                     float speed = this.CalculateAccelerationFromSpeed(0f);
                     defaultDirection += this.aimDirection * speed;
 
-                    this.characterLocomotion.characterController.Move(defaultDirection * Time.deltaTime);
+                    this.characterLocomotion.locomotionDriver.SetVelocity(defaultDirection);
                 }
 
 				return (this.usingNavmesh
 					? CharacterLocomotion.LOCOMOTION_SYSTEM.NavigationMeshAgent
-					: CharacterLocomotion.LOCOMOTION_SYSTEM.CharacterController
+					: CharacterLocomotion.LOCOMOTION_SYSTEM.LocomotionDriver
 				);
 			}
 
@@ -70,7 +70,7 @@
                 agent.updatePosition = true;
                 agent.updateUpAxis = true;
 
-                CharacterController controller = this.characterLocomotion.characterController;
+                ILocomotionDriver locomotionDriver = this.characterLocomotion.locomotionDriver;
 
                 NavMeshHit hit = new NavMeshHit();
                 NavMesh.SamplePosition(this.targetTransform.position, out hit, 1.0f, NavMesh.AllAreas);
@@ -78,7 +78,7 @@
 
                 float remainingDistance = agent.remainingDistance;
                 bool isGrounded = agent.isOnOffMeshLink;
-                agent.speed = this.CalculateSpeed(controller.transform.forward, isGrounded);
+                agent.speed = this.CalculateSpeed(locomotionDriver.transform.forward, isGrounded);
                 agent.angularSpeed = this.characterLocomotion.angularSpeed;
 
                 agent.isStopped = false;
@@ -94,11 +94,11 @@
                     this.characterLocomotion.navmeshAgent.enabled = false;
                 }
 
-                CharacterController controller = this.characterLocomotion.characterController;
+                ILocomotionDriver locomotionDriver = this.characterLocomotion.locomotionDriver;
                 Vector3 targetPosition = Vector3.Scale(this.targetTransform.position, HORIZONTAL_PLANE);
                 targetPosition += Vector3.up * currPosition.y;
                 Vector3 targetDirection = (targetPosition - currPosition).normalized;
-                float speed = this.CalculateSpeed(targetDirection, controller.isGrounded);
+                float speed = this.CalculateSpeed(targetDirection, locomotionDriver.IsGrounded());
 
                 speed = this.CalculateAccelerationFromSpeed(speed);
 
@@ -107,18 +107,18 @@
                 this.UpdateAnimationConstraints(ref targetDirection, ref targetRotation);
 
                 targetDirection = Vector3.Scale(targetDirection, HORIZONTAL_PLANE) * speed;
-                targetDirection += Vector3.up * this.characterLocomotion.verticalSpeed;
+                targetDirection += this.characterLocomotion.GetMomentum();
 
-                controller.Move(targetDirection * Time.deltaTime);
-                controller.transform.rotation = targetRotation;
+                locomotionDriver.SetVelocity(targetDirection);
+                locomotionDriver.transform.rotation = targetRotation;
 
                 if (this.characterLocomotion.navmeshAgent != null && this.characterLocomotion.navmeshAgent.isOnNavMesh)
                 {
-                    Vector3 position = this.characterLocomotion.characterController.transform.position;
+                    Vector3 position = this.characterLocomotion.locomotionDriver.transform.position;
                     this.characterLocomotion.navmeshAgent.Warp(position);
                 }
 
-                return CharacterLocomotion.LOCOMOTION_SYSTEM.CharacterController;
+                return CharacterLocomotion.LOCOMOTION_SYSTEM.LocomotionDriver;
             }
 		}
 
@@ -132,15 +132,15 @@
 		private void UpdateNavmeshAnimationConstraints()
 		{
 			NavMeshAgent agent = this.characterLocomotion.navmeshAgent;
-			if (this.characterLocomotion.animatorConstraint == CharacterLocomotion.ANIM_CONSTRAINT.KEEP_MOVEMENT) 
+			if (this.characterLocomotion.animatorConstraint == CharacterLocomotion.ANIM_CONSTRAINT.KEEP_MOVEMENT)
 			{
-				if (agent.velocity == Vector3.zero) 
+				if (agent.velocity == Vector3.zero)
 				{
 					agent.Move(agent.transform.forward * agent.speed * Time.deltaTime);
 				}
 			}
 
-			if (this.characterLocomotion.animatorConstraint == CharacterLocomotion.ANIM_CONSTRAINT.KEEP_POSITION) 
+			if (this.characterLocomotion.animatorConstraint == CharacterLocomotion.ANIM_CONSTRAINT.KEEP_POSITION)
 			{
 				agent.isStopped = true;
 			}

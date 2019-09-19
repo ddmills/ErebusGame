@@ -7,7 +7,7 @@
 	using GameCreator.Core.Hooks;
     using System;
 
-    public class LocomotionSystemDirectional : ILocomotionSystem 
+    public class LocomotionSystemDirectional : ILocomotionSystem
 	{
 		// PROPERTIES: ----------------------------------------------------------------------------
 
@@ -26,10 +26,10 @@
 			}
 
 			Vector3 targetDirection = this.desiredDirection;
-            CharacterController controller = this.characterLocomotion.characterController;
-            Vector3 characterForward = controller.transform.TransformDirection(Vector3.forward);
+            ILocomotionDriver locomotionDriver = this.characterLocomotion.locomotionDriver;
+            Vector3 characterForward = locomotionDriver.transform.TransformDirection(Vector3.forward);
 
-            float targetSpeed = this.CalculateSpeed(targetDirection, controller.isGrounded);
+            float targetSpeed = this.CalculateSpeed(targetDirection, locomotionDriver.IsGrounded());
 
             if (targetDirection == Vector3.zero)
             {
@@ -46,24 +46,24 @@
             this.UpdateSliding();
 
             if (this.isSliding) targetDirection = this.slideDirection;
-            targetDirection += Vector3.up * this.characterLocomotion.verticalSpeed;
+            targetDirection += this.characterLocomotion.GetMomentum();
 
             if (this.isDashing)
             {
                 targetDirection = this.dashVelocity;
-                targetRotation = controller.transform.rotation;
+                targetRotation = locomotionDriver.transform.rotation;
             }
 
-            controller.Move(targetDirection * Time.deltaTime);
-			controller.transform.rotation = targetRotation;
+            locomotionDriver.SetVelocity(targetDirection);
+			locomotionDriver.transform.rotation = targetRotation;
 
-			if (this.characterLocomotion.navmeshAgent != null && 
+			if (this.characterLocomotion.navmeshAgent != null &&
                 this.characterLocomotion.navmeshAgent.isActiveAndEnabled)
 			{
                 this.characterLocomotion.navmeshAgent.enabled = false;
             }
 
-            return CharacterLocomotion.LOCOMOTION_SYSTEM.CharacterController;
+            return CharacterLocomotion.LOCOMOTION_SYSTEM.LocomotionDriver;
 		}
 
         public override void OnDestroy ()

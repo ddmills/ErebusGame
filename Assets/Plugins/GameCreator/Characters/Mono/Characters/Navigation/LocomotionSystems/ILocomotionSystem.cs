@@ -72,7 +72,7 @@
             this.dashDrag = drag;
 
             this.dashVelocity = direction.normalized * (
-                impulse * Mathf.Log(1f / (Time.deltaTime * this.dashDrag + 1)) / -Time.deltaTime
+                impulse * Mathf.Log(1f / (Time.fixedDeltaTime * this.dashDrag + 1)) / -Time.fixedDeltaTime
             );
         }
 
@@ -84,7 +84,7 @@
             {
                 if (Time.time >= this.dashStartTime + this.dashDuration)
                 {
-                    this.dashVelocity /= 1 + this.dashDrag * Time.deltaTime;
+                    this.dashVelocity /= 1 + this.dashDrag * Time.fixedDeltaTime;
                 }
 
                 if (this.dashVelocity.magnitude < this.characterLocomotion.runSpeed)
@@ -93,7 +93,7 @@
                 }
             }
 
-            return CharacterLocomotion.LOCOMOTION_SYSTEM.CharacterController;
+            return CharacterLocomotion.LOCOMOTION_SYSTEM.LocomotionDriver;
         }
 
 		public abstract void OnDestroy();
@@ -104,8 +104,8 @@
 		{
 			Quaternion targetRotation = this.characterLocomotion.character.transform.rotation;
             this.aimDirection = this.characterLocomotion.character.transform.forward;
-            this.movementDirection = (targetDirection == Vector3.zero 
-                ? this.aimDirection 
+            this.movementDirection = (targetDirection == Vector3.zero
+                ? this.aimDirection
                 : targetDirection.normalized
             );
 
@@ -121,7 +121,7 @@
                 targetRotation = Quaternion.RotateTowards(
                     srcRotation,
                     dstRotation,
-                    Time.deltaTime * this.characterLocomotion.angularSpeed
+                    Time.fixedDeltaTime * this.characterLocomotion.angularSpeed
                 );
             }
             else if (faceDirection.direction == CharacterLocomotion.FACE_DIRECTION.CameraDirection &&
@@ -138,7 +138,7 @@
                 targetRotation = Quaternion.RotateTowards(
                     srcRotation,
                     dstRotation,
-                    Time.deltaTime * this.characterLocomotion.angularSpeed
+                    Time.fixedDeltaTime * this.characterLocomotion.angularSpeed
                 );
             }
             else if (faceDirection.direction == CharacterLocomotion.FACE_DIRECTION.Target)
@@ -155,7 +155,7 @@
                 targetRotation = Quaternion.RotateTowards(
                     srcRotation,
                     dstRotation,
-                    Time.deltaTime * this.characterLocomotion.angularSpeed
+                    Time.fixedDeltaTime * this.characterLocomotion.angularSpeed
                 );
             }
             else if (faceDirection.direction == CharacterLocomotion.FACE_DIRECTION.GroundPlaneCursor)
@@ -187,7 +187,7 @@
                     targetRotation = Quaternion.RotateTowards(
                         srcRotation,
                         dstRotation,
-                        Time.deltaTime * this.characterLocomotion.angularSpeed
+                        Time.fixedDeltaTime * this.characterLocomotion.angularSpeed
                     );
                 }
             }
@@ -197,8 +197,8 @@
 
 		protected float CalculateSpeed(Vector3 targetDirection, bool isGrounded)
 		{
-			float targetSpeed = (this.characterLocomotion.canRun 
-				? this.characterLocomotion.runSpeed 
+			float targetSpeed = (this.characterLocomotion.canRun
+				? this.characterLocomotion.runSpeed
                 : this.characterLocomotion.runSpeed / 2.0f
 			);
 
@@ -220,12 +220,12 @@
         protected float CalculateAccelerationFromSpeed(float targetSpeed)
         {
             float speed = Vector3.Scale(
-                this.characterLocomotion.characterController.velocity,
+                this.characterLocomotion.locomotionDriver.GetVelocity(),
                 HORIZONTAL_PLANE
             ).magnitude;
 
-            float increment = this.characterLocomotion.acceleration * Time.deltaTime;
-            float decrement = this.characterLocomotion.deceleration * Time.deltaTime;
+            float increment = this.characterLocomotion.acceleration * Time.fixedDeltaTime;
+            float decrement = this.characterLocomotion.deceleration * Time.fixedDeltaTime;
 
             if (speed < targetSpeed) speed = Mathf.Min(targetSpeed, speed + increment);
             else if (speed > targetSpeed) speed = Mathf.Max(0, speed - decrement);
@@ -235,18 +235,18 @@
 
 		protected virtual void UpdateAnimationConstraints(ref Vector3 targetDirection, ref Quaternion targetRotation)
 		{
-			if (this.characterLocomotion.animatorConstraint == CharacterLocomotion.ANIM_CONSTRAINT.KEEP_MOVEMENT) 
+			if (this.characterLocomotion.animatorConstraint == CharacterLocomotion.ANIM_CONSTRAINT.KEEP_MOVEMENT)
 			{
-				if (targetDirection == Vector3.zero) 
+				if (targetDirection == Vector3.zero)
 				{
-					targetDirection = this.characterLocomotion.characterController.transform.forward;
+					targetDirection = this.characterLocomotion.locomotionDriver.transform.forward;
 				}
 			}
 
-			if (this.characterLocomotion.animatorConstraint == CharacterLocomotion.ANIM_CONSTRAINT.KEEP_POSITION) 
+			if (this.characterLocomotion.animatorConstraint == CharacterLocomotion.ANIM_CONSTRAINT.KEEP_POSITION)
 			{
 				targetDirection = Vector3.zero;
-				targetRotation = this.characterLocomotion.characterController.transform.rotation;
+				targetRotation = this.characterLocomotion.locomotionDriver.transform.rotation;
 			}
 		}
 
@@ -254,8 +254,8 @@
         {
             float slopeAngle = Vector3.Angle(Vector3.up, this.characterLocomotion.terrainNormal);
             this.isSliding = (
-                this.characterLocomotion.character.IsGrounded() && 
-                slopeAngle > this.characterLocomotion.characterController.slopeLimit
+                this.characterLocomotion.character.IsGrounded() &&
+                slopeAngle > this.characterLocomotion.locomotionDriver.GetSlopeAngleLimit()
             );
 
             if (this.isSliding)
