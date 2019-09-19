@@ -21,10 +21,19 @@
             EventSystemManager.Instance.Wakeup();
 		}
 
-		public void OnDrag(PointerEventData eventData)
+        private void OnEnable()
+        {
+            this.OnPointerUp(null);
+        }
+
+        private void OnDisable()
+        {
+            this.OnPointerUp(null);
+        }
+
+        public void OnDrag(PointerEventData eventData)
         {
             Vector2 position = Vector2.zero;
-
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
                 this.jsContainer.rectTransform,
                 eventData.position,
@@ -45,7 +54,6 @@
                 this.direction.x * (this.jsContainer.rectTransform.sizeDelta.x / 3),
                 this.direction.y * (this.jsContainer.rectTransform.sizeDelta.y / 3)
             );
-
         }
 
         public void OnPointerDown(PointerEventData eventData)

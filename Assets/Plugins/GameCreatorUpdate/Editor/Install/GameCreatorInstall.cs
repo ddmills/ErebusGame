@@ -136,7 +136,7 @@
             bool success = true;
             string message = string.Empty;
 
-            #if UNITY_2019_3_OR_NEWER
+            #if UNITY_2020_1_OR_NEWER
             success = false;
             message = string.Format("{0} {1}", ERR_ALPHA, ERR_LTS);
             #elif UNITY_2019_1_OR_NEWER

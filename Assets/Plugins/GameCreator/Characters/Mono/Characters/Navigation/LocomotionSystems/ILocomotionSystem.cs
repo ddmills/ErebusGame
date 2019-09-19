@@ -6,8 +6,9 @@
 	using UnityEngine.Events;
 	using GameCreator.Core;
 	using GameCreator.Core.Hooks;
+    using System;
 
-	public abstract class ILocomotionSystem
+    public abstract class ILocomotionSystem
 	{
 		public class TargetRotation
 		{
@@ -71,7 +72,7 @@
             this.dashDrag = drag;
 
             this.dashVelocity = direction.normalized * (
-                impulse * Mathf.Log(1f / (Time.fixedDeltaTime * this.dashDrag + 1)) / -Time.fixedDeltaTime
+                impulse * Mathf.Log(1f / (Time.deltaTime * this.dashDrag + 1)) / -Time.deltaTime
             );
         }
 
@@ -83,7 +84,7 @@
             {
                 if (Time.time >= this.dashStartTime + this.dashDuration)
                 {
-                    this.dashVelocity /= 1 + this.dashDrag * Time.fixedDeltaTime;
+                    this.dashVelocity /= 1 + this.dashDrag * Time.deltaTime;
                 }
 
                 if (this.dashVelocity.magnitude < this.characterLocomotion.runSpeed)
@@ -92,7 +93,7 @@
                 }
             }
 
-            return CharacterLocomotion.LOCOMOTION_SYSTEM.LocomotionDriver;
+            return CharacterLocomotion.LOCOMOTION_SYSTEM.CharacterController;
         }
 
 		public abstract void OnDestroy();
@@ -103,8 +104,8 @@
 		{
 			Quaternion targetRotation = this.characterLocomotion.character.transform.rotation;
             this.aimDirection = this.characterLocomotion.character.transform.forward;
-            this.movementDirection = (targetDirection == Vector3.zero
-                ? this.aimDirection
+            this.movementDirection = (targetDirection == Vector3.zero 
+                ? this.aimDirection 
                 : targetDirection.normalized
             );
 
@@ -120,7 +121,7 @@
                 targetRotation = Quaternion.RotateTowards(
                     srcRotation,
                     dstRotation,
-                    Time.fixedDeltaTime * this.characterLocomotion.angularSpeed
+                    Time.deltaTime * this.characterLocomotion.angularSpeed
                 );
             }
             else if (faceDirection.direction == CharacterLocomotion.FACE_DIRECTION.CameraDirection &&
@@ -137,7 +138,7 @@
                 targetRotation = Quaternion.RotateTowards(
                     srcRotation,
                     dstRotation,
-                    Time.fixedDeltaTime * this.characterLocomotion.angularSpeed
+                    Time.deltaTime * this.characterLocomotion.angularSpeed
                 );
             }
             else if (faceDirection.direction == CharacterLocomotion.FACE_DIRECTION.Target)
@@ -154,7 +155,7 @@
                 targetRotation = Quaternion.RotateTowards(
                     srcRotation,
                     dstRotation,
-                    Time.fixedDeltaTime * this.characterLocomotion.angularSpeed
+                    Time.deltaTime * this.characterLocomotion.angularSpeed
                 );
             }
             else if (faceDirection.direction == CharacterLocomotion.FACE_DIRECTION.GroundPlaneCursor)
@@ -186,7 +187,7 @@
                     targetRotation = Quaternion.RotateTowards(
                         srcRotation,
                         dstRotation,
-                        Time.fixedDeltaTime * this.characterLocomotion.angularSpeed
+                        Time.deltaTime * this.characterLocomotion.angularSpeed
                     );
                 }
             }
@@ -196,8 +197,8 @@
 
 		protected float CalculateSpeed(Vector3 targetDirection, bool isGrounded)
 		{
-			float speed = (this.characterLocomotion.canRun
-				? this.characterLocomotion.runSpeed
+			float targetSpeed = (this.characterLocomotion.canRun 
+				? this.characterLocomotion.runSpeed 
                 : this.characterLocomotion.runSpeed / 2.0f
 			);
 
@@ -210,26 +211,42 @@
 				Quaternion dstRotation = Quaternion.LookRotation(targetDirection);
                 float angle = Quaternion.Angle(srcRotation, dstRotation) / 180.0f;
                 float speedDampening = Mathf.Clamp(1.0f - angle, 0.5f, 1.0f);
-				speed *= speedDampening;
+                targetSpeed *= speedDampening;
 			}
 
-			return speed;
+			return targetSpeed;
 		}
+
+        protected float CalculateAccelerationFromSpeed(float targetSpeed)
+        {
+            float speed = Vector3.Scale(
+                this.characterLocomotion.characterController.velocity,
+                HORIZONTAL_PLANE
+            ).magnitude;
+
+            float increment = this.characterLocomotion.acceleration * Time.deltaTime;
+            float decrement = this.characterLocomotion.deceleration * Time.deltaTime;
+
+            if (speed < targetSpeed) speed = Mathf.Min(targetSpeed, speed + increment);
+            else if (speed > targetSpeed) speed = Mathf.Max(0, speed - decrement);
+
+            return speed;
+        }
 
 		protected virtual void UpdateAnimationConstraints(ref Vector3 targetDirection, ref Quaternion targetRotation)
 		{
-			if (this.characterLocomotion.animatorConstraint == CharacterLocomotion.ANIM_CONSTRAINT.KEEP_MOVEMENT)
+			if (this.characterLocomotion.animatorConstraint == CharacterLocomotion.ANIM_CONSTRAINT.KEEP_MOVEMENT) 
 			{
-				if (targetDirection == Vector3.zero)
+				if (targetDirection == Vector3.zero) 
 				{
-					targetDirection = this.characterLocomotion.locomotionDriver.transform.forward;
+					targetDirection = this.characterLocomotion.characterController.transform.forward;
 				}
 			}
 
-			if (this.characterLocomotion.animatorConstraint == CharacterLocomotion.ANIM_CONSTRAINT.KEEP_POSITION)
+			if (this.characterLocomotion.animatorConstraint == CharacterLocomotion.ANIM_CONSTRAINT.KEEP_POSITION) 
 			{
 				targetDirection = Vector3.zero;
-				targetRotation = this.characterLocomotion.locomotionDriver.transform.rotation;
+				targetRotation = this.characterLocomotion.characterController.transform.rotation;
 			}
 		}
 
@@ -237,17 +254,16 @@
         {
             float slopeAngle = Vector3.Angle(Vector3.up, this.characterLocomotion.terrainNormal);
             this.isSliding = (
-                this.characterLocomotion.character.IsGrounded() &&
-                slopeAngle > this.characterLocomotion.locomotionDriver.GetSlopeAngleLimit()
+                this.characterLocomotion.character.IsGrounded() && 
+                slopeAngle > this.characterLocomotion.characterController.slopeLimit
             );
 
             if (this.isSliding)
             {
                 this.isSliding = true;
-                this.slideDirection = Vector3.Scale(
-                    this.characterLocomotion.terrainNormal,
-                    new Vector3(1f, 0f, 1f)
-                ).normalized * this.characterLocomotion.runSpeed;
+                this.slideDirection = Vector3.Reflect(
+                    Vector3.down, this.characterLocomotion.terrainNormal
+                ) * this.characterLocomotion.runSpeed;
             }
             else
             {

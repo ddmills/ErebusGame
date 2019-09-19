@@ -57,13 +57,13 @@
                     t = Easing.QuadInOut(0.0f, 1.0f, t / this.targetTime);
 
                     this.currentWeight = Mathf.Lerp(
-                        this.currentWeight,
-                        1.0f,
+                        this.currentWeight, 
+                        1.0f, 
                         t
                     );
 
                     this.currentPosition = Vector3.Slerp(
-                        this.currentPosition,
+                        this.currentPosition, 
                         this.targetPosition,
                         Easing.QuadInOut(0.0f, 1.0f, t/this.targetTime)
                     );
@@ -111,6 +111,7 @@
         private Animator animator;
         private Character character;
         private CharacterAnimator characterAnimator;
+        private CharacterController controller;
 
         private Hand handL;
         private Hand handR;
@@ -125,7 +126,8 @@
             this.character = character;
             this.characterAnimator = this.character.GetCharacterAnimator();
             this.animator = this.characterAnimator.animator;
-            if (this.animator == null || !this.animator.isHuman) return;
+            this.controller = gameObject.GetComponentInParent<CharacterController>();
+            if (this.animator == null || !this.animator.isHuman || this.controller == null) return;
 
             Transform handLTransform = this.animator.GetBoneTransform(HumanBodyBones.LeftHand);
             Transform handRTransform = this.animator.GetBoneTransform(HumanBodyBones.RightHand);
@@ -163,21 +165,21 @@
         {
             switch (limb)
             {
-                case Limb.LeftHand  :
-                    this.handL.Reach(this.animator, target, duration);
+                case Limb.LeftHand  : 
+                    this.handL.Reach(this.animator, target, duration); 
                     break;
 
-                case Limb.RightHand :
-                    this.handR.Reach(this.animator, target, duration);
+                case Limb.RightHand : 
+                    this.handR.Reach(this.animator, target, duration); 
+                    break;
+                
+                case Limb.NearestHand : 
+                    this.NearestHand(target).Reach(this.animator, target, duration); 
                     break;
 
-                case Limb.NearestHand :
-                    this.NearestHand(target).Reach(this.animator, target, duration);
-                    break;
-
-                case Limb.BothHands:
-                    this.handL.Reach(this.animator, target, duration);
-                    this.handR.Reach(this.animator, target, duration);
+                case Limb.BothHands: 
+                    this.handL.Reach(this.animator, target, duration); 
+                    this.handR.Reach(this.animator, target, duration); 
                     break;
             }
         }
@@ -208,8 +210,8 @@
             Vector3 tL = this.handL.hand.position;
             Vector3 tR = this.handR.hand.position;
 
-            return (Vector3.Distance(tL, target.position) < Vector3.Distance(tR, target.position)
-                ? this.handL
+            return (Vector3.Distance(tL, target.position) < Vector3.Distance(tR, target.position) 
+                ? this.handL 
                 : this.handR
             );
         }

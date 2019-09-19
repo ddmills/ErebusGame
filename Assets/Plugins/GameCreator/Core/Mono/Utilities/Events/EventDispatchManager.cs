@@ -6,6 +6,7 @@ namespace GameCreator.Core
     using System.Collections.Generic;
     using UnityEngine;
 
+    [AddComponentMenu("")]
     public class EventDispatchManager : Singleton<EventDispatchManager>
     {
         [Serializable] public class Dispatcher : UnityEvent<GameObject> { }

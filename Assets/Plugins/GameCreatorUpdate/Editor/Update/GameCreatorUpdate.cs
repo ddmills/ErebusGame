@@ -14,8 +14,6 @@
         public const string KEY_LAST_CHECK_DATE = "gamecreator-update-checkdate";
         public const string KEY_UPDATE_CACHE = "gamecreator-update-cache";
 
-        private const int INTERVAL_CHECK_UPDATES_HOURS = 24;
-
         public const string GAMECREATOR_BUNDLE = "com.gamecreator.module.core";
         public const string URL_DOWNLOAD = "https://hub.gamecreator.io/downloads";
         public static bool CHECKING_UPDATES = false;
@@ -37,7 +35,7 @@
             );
 
             TimeSpan timeSpan = DateTime.Now - DateTime.Parse(strLastCheck);
-            if (timeSpan.Hours >= INTERVAL_CHECK_UPDATES_HOURS)
+            if (timeSpan.TotalDays >= 1)
             {
                 SaveCheckTime();
                 UpdateHttpRequest.Request(GAMECREATOR_BUNDLE, OnRetrieveUpdate);

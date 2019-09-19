@@ -9,21 +9,13 @@
     using GameCreator.Core;
     using System;
 
-    [RequireComponent(typeof(ILocomotionDriver))]
+    [RequireComponent(typeof(CharacterController))]
 	[AddComponentMenu("Game Creator/Characters/Character", 100)]
     public class Character : GlobalID, IGameSave
 	{
-        public enum LocomotionState
-        {
-            Grounded,
-            Falling,
-            Rising
-        }
-
 		[System.Serializable]
 		public class State
 		{
-            // TODO: cleanup!
 			public Vector3 forwardSpeed;
 			public float sidesSpeed;
             public float pivotSpeed;
@@ -33,12 +25,9 @@
             public float isDashing;
 			public float verticalSpeed;
 			public Vector3 normal;
-            public LocomotionState locomotionState;
 
 			public State()
 			{
-                this.locomotionState = LocomotionState.Grounded;
-				this.forwardSpeed = Vector3.zero;
 				this.forwardSpeed = Vector3.zero;
 				this.sidesSpeed = 0f;
                 this.targetLock = false;
@@ -130,7 +119,10 @@
 			this.animator = GetComponent<CharacterAnimator>();
 			this.characterLocomotion.Setup(this);
 
-            this.ragdoll = new CharacterRagdoll(this);
+            if (this.animator != null && this.animator.autoInitializeRagdoll)
+            {
+                this.InitializeRagdoll();
+            }
 		}
 
         protected void OnDestroy()
@@ -146,7 +138,7 @@
 
         // UPDATE: --------------------------------------------------------------------------------
 
-        private void FixedUpdate()
+        private void Update()
 		{
             if (!Application.isPlaying) return;
             this.CharacterUpdate();
@@ -154,14 +146,14 @@
 
 		protected void CharacterUpdate()
 		{
-            if (this.ragdoll.GetState() != CharacterRagdoll.State.Normal) return;
+            if (this.ragdoll != null && this.ragdoll.GetState() != CharacterRagdoll.State.Normal) return;
             this.characterLocomotion.Update();
 		}
 
         private void LateUpdate()
         {
             if (!Application.isPlaying) return;
-            if (this.ragdoll.GetState() != CharacterRagdoll.State.Normal)
+            if (this.ragdoll != null && this.ragdoll.GetState() != CharacterRagdoll.State.Normal)
             {
                 this.ragdoll.Update();
             }
@@ -179,7 +171,7 @@
             if (active && this.ragdoll.GetState() != CharacterRagdoll.State.Normal) return;
             if (!active && this.ragdoll.GetState() == CharacterRagdoll.State.Normal) return;
 
-            this.characterLocomotion.locomotionDriver.SetCollisionDetection(!active);
+            this.characterLocomotion.characterController.detectCollisions = !active;
             this.animator.animator.enabled = !active;
 
             Transform model = this.animator.animator.transform;
@@ -197,6 +189,11 @@
             }
         }
 
+        public void InitializeRagdoll()
+        {
+            this.ragdoll = new CharacterRagdoll(this);
+        }
+
 		// GETTERS: -------------------------------------------------------------------------------
 
 		public bool IsControllable()
@@ -207,7 +204,7 @@
 
         public bool IsRagdoll()
         {
-            return (this.ragdoll.GetState() != CharacterRagdoll.State.Normal);
+            return (this.ragdoll != null && this.ragdoll.GetState() != CharacterRagdoll.State.Normal);
         }
 
         public int GetCharacterMotion()
@@ -228,7 +225,7 @@
         public bool IsGrounded()
         {
             if (this.characterState == null) return true;
-            return this.characterState.locomotionState == LocomotionState.Grounded;
+            return Mathf.Approximately(this.characterState.isGrounded, 1.0f);
         }
 
         public CharacterAnimator GetCharacterAnimator()
@@ -244,15 +241,10 @@
             if (this.animator != null) this.animator.Dash();
         }
 
-        public void AddMomentum(Vector3 momentum)
-        {
-            this.characterLocomotion.AddMomentum(momentum);
-        }
-
 		public void Jump(float force)
 		{
             int jumpChain = this.characterLocomotion.Jump(force);
-            if (jumpChain >= 0 && this.animator != null)
+            if (jumpChain >= 0 && this.animator != null) 
 			{
 				this.animator.Jump();
 			}
@@ -277,7 +269,7 @@
 
 		// FLOOR COLLISION: -----------------------------------------------------------------------
 
-		private void OnControllerColliderHit(ControllerColliderHit hit)
+		private void OnControllerColliderHit(ControllerColliderHit hit) 
 		{
             if (!Application.isPlaying) return;
 			Rigidbody hitRigidbody = hit.collider.attachedRigidbody;
@@ -287,10 +279,8 @@
                 hitRigidbody.AddForceAtPosition(force, hit.point, ForceMode.Force);
 			}
 
-			float characterRadius = this.characterLocomotion.locomotionDriver.GetRadius();
-			if (Vector3.Distance(transform.position, hit.point) > characterRadius) return;
-
-			this.characterLocomotion.terrainNormal = hit.normal;
+            if (Vector3.Angle(hit.normal, Vector3.up) >= 90f) return;
+            this.characterLocomotion.terrainNormal = hit.normal;
 		}
 
         // GIZMOS: --------------------------------------------------------------------------------

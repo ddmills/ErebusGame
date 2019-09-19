@@ -35,9 +35,23 @@
             );
 		}
 
-        public void Event_BothSteps() { this.character.onStep.Invoke(CharacterLocomotion.STEP.Any);  }
-        public void Event_LeftStep()  { this.character.onStep.Invoke(CharacterLocomotion.STEP.Left);  }
-        public void Event_RightStep() { this.character.onStep.Invoke(CharacterLocomotion.STEP.Right); }
+        public void Event_BothSteps(AnimationEvent animationEvent)
+        {
+            if (animationEvent.animatorClipInfo.weight < 0.4f) return;
+            this.character.onStep.Invoke(CharacterLocomotion.STEP.Any);
+        }
+
+        public void Event_LeftStep(AnimationEvent animationEvent)
+        {
+            if (animationEvent.animatorClipInfo.weight < 0.4f) return;
+            this.character.onStep.Invoke(CharacterLocomotion.STEP.Left);
+        }
+
+        public void Event_RightStep(AnimationEvent animationEvent)
+        {
+            if (animationEvent.animatorClipInfo.weight < 0.4f) return;
+            this.character.onStep.Invoke(CharacterLocomotion.STEP.Right);
+        }
 
         // COROUTINES: -------------------------------------------------------------------------------------------------
 

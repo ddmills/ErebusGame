@@ -31,9 +31,9 @@
 			{
 				if (!this.usingNavmesh)
 				{
-					// Vector3 defaultDirection = Vector3.up * this.characterLocomotion.verticalSpeed;
-					this.characterLocomotion.locomotionDriver.SetVelocity(Vector3.zero);
-                    return CharacterLocomotion.LOCOMOTION_SYSTEM.LocomotionDriver;
+					Vector3 defaultDirection = Vector3.up * this.characterLocomotion.verticalSpeed;
+                    this.characterLocomotion.characterController.Move(defaultDirection * Time.deltaTime);
+                    return CharacterLocomotion.LOCOMOTION_SYSTEM.CharacterController;
                 }
 
                 this.characterLocomotion.navmeshAgent.enabled = true;
@@ -45,6 +45,7 @@
 				NavMeshAgent agent = this.characterLocomotion.navmeshAgent;
                 agent.enabled = true;
 
+                CharacterController controller = this.characterLocomotion.characterController;
                 if (agent.pathPending) return CharacterLocomotion.LOCOMOTION_SYSTEM.NavigationMeshAgent;
 
                 if (!agent.hasPath || agent.pathStatus != NavMeshPathStatus.PathComplete)
@@ -65,7 +66,7 @@
 
                 float remainingDistance = agent.remainingDistance;
 				bool isGrounded = agent.isOnOffMeshLink;
-				agent.speed = this.CalculateSpeed(this.characterLocomotion.locomotionDriver.transform.forward, isGrounded);
+				agent.speed = this.CalculateSpeed(controller.transform.forward, isGrounded);
 				agent.angularSpeed = this.characterLocomotion.angularSpeed;
 
 				agent.isStopped = false;
@@ -90,30 +91,32 @@
             }
 			else
 			{
-				if (this.characterLocomotion.navmeshAgent != null &&
+				if (this.characterLocomotion.navmeshAgent != null && 
                     this.characterLocomotion.navmeshAgent.enabled)
 				{
                     this.characterLocomotion.navmeshAgent.enabled = false;
                 }
 
-                ILocomotionDriver locomotionDriver = this.characterLocomotion.locomotionDriver;
+                CharacterController controller = this.characterLocomotion.characterController;
                 Vector3 targetPos = Vector3.Scale(this.targetPosition, HORIZONTAL_PLANE);
-				targetPos += Vector3.up * locomotionDriver.transform.position.y;
-				Vector3 targetDirection = (targetPos - locomotionDriver.transform.position).normalized;
+				targetPos += Vector3.up * controller.transform.position.y;
+				Vector3 targetDirection = (targetPos - controller.transform.position).normalized;
 
-				float speed = this.CalculateSpeed(targetDirection, locomotionDriver.IsGrounded());
+				float speed = this.CalculateSpeed(targetDirection, controller.isGrounded);
+                speed = this.CalculateAccelerationFromSpeed(speed);
+
                 Quaternion targetRot = this.UpdateRotation(targetDirection);
 
 				this.UpdateAnimationConstraints(ref targetDirection, ref targetRot);
 
 				targetDirection = Vector3.Scale(targetDirection, HORIZONTAL_PLANE) * speed;
-				targetDirection += this.characterLocomotion.GetMomentum();
+				targetDirection += Vector3.up * this.characterLocomotion.verticalSpeed;
 
-				locomotionDriver.SetVelocity(targetDirection);
-				locomotionDriver.transform.rotation = targetRot;
+				controller.Move(targetDirection * Time.deltaTime);
+				controller.transform.rotation = targetRot;
 
 				float remainingDistance = (Vector3.Distance(
-                    Vector3.Scale(locomotionDriver.transform.position, HORIZONTAL_PLANE),
+                    Vector3.Scale(controller.transform.position, HORIZONTAL_PLANE),
                     Vector3.Scale(this.targetPosition, HORIZONTAL_PLANE)
                 ));
 
@@ -126,7 +129,7 @@
 					this.Slowing(remainingDistance);
 				}
 
-                return CharacterLocomotion.LOCOMOTION_SYSTEM.LocomotionDriver;
+                return CharacterLocomotion.LOCOMOTION_SYSTEM.CharacterController;
             }
 		}
 
@@ -186,7 +189,7 @@
 			{
 				if (agent.velocity == Vector3.zero)
 				{
-					agent.Move(agent.transform.forward * agent.speed * Time.fixedDeltaTime);
+					agent.Move(agent.transform.forward * agent.speed * Time.deltaTime);
 				}
 			}
 
@@ -205,17 +208,22 @@
 			}
 		}
 
-		// PUBLIC METHODS: ------------------------------------------------------------------------
+        // PUBLIC METHODS: ------------------------------------------------------------------------
 
-        public void SetTarget(Ray ray, LayerMask layerMask, TargetRotation rotation,
+        private RaycastHit[] hitBuffer = new RaycastHit[1];
+
+        public void SetTarget(Ray ray, LayerMask layerMask, TargetRotation rotation, 
             float stopThreshold, UnityAction callback = null)
 		{
-            RaycastHit hit;
-
             QueryTriggerInteraction queryTrigger = QueryTriggerInteraction.Ignore;
-            if (Physics.Raycast(ray, out hit, Mathf.Infinity, layerMask, queryTrigger))
+            int hitCount = Physics.RaycastNonAlloc(
+                ray, this.hitBuffer, Mathf.Infinity,
+                layerMask, queryTrigger
+            );
+
+            if (hitCount > 0)
 			{
-				this.SetTarget(hit.point, rotation, stopThreshold, callback);
+				this.SetTarget(this.hitBuffer[0].point, rotation, stopThreshold, callback);
 			}
 		}
 
@@ -235,7 +243,7 @@
 
 				this.path = new NavMeshPath();
 				bool pathFound = NavMesh.CalculatePath(
-					this.characterLocomotion.locomotionDriver.transform.position,
+					this.characterLocomotion.characterController.transform.position,
 					position,
 					NavMesh.AllAreas,
 					this.path
@@ -263,7 +271,7 @@
         public void Stop(TargetRotation rotation = null, UnityAction callback = null)
         {
             this.SetTarget(
-                this.characterLocomotion.locomotionDriver.transform.position,
+                this.characterLocomotion.characterController.transform.position,
                 rotation,
                 0f,
                 callback

@@ -1,12 +1,14 @@
 ﻿namespace GameCreator.Core
 {
+    using System;
 	using System.Collections;
 	using System.Collections.Generic;
 	using UnityEngine;
 	using GameCreator.Core.Hooks;
     using GameCreator.Variables;
+    using UnityEngine.Events;
 
-	[System.Serializable]
+    [System.Serializable]
 	public class TargetGameObject
 	{
 		public enum Target
@@ -20,6 +22,9 @@
             GlobalVariable,
 		}
 
+        [Serializable]
+        public class ChangeEvent : UnityEvent { }
+
 		// PROPERTIES: ----------------------------------------------------------------------------
 
         public Target target = Target.GameObject;
@@ -28,6 +33,8 @@
         public HelperGlobalVariable global = new HelperGlobalVariable();
         public HelperLocalVariable local = new HelperLocalVariable();
         public HelperGetListVariable list = new HelperGetListVariable();
+
+        public ChangeEvent eventChangeVariable = new ChangeEvent();
 
         // INITIALIZERS: --------------------------------------------------------------------------
 
@@ -85,7 +92,7 @@
             return targetGo.transform;
         }
 
-        public T GetComponent<T>(GameObject invoker) where T : Object
+        public T GetComponent<T>(GameObject invoker) where T : UnityEngine.Object
         {
             GameObject targetGo = this.GetGameObject(invoker);
             if (targetGo == null) return null;
@@ -99,18 +106,86 @@
             return targetGo.GetComponent(type);
         }
 
-        public T GetComponentInChildren<T>(GameObject invoker) where T : Object
+        public T GetComponentInChildren<T>(GameObject invoker) where T : UnityEngine.Object
         {
             GameObject targetGo = this.GetGameObject(invoker);
             if (targetGo == null) return null;
             return targetGo.GetComponentInChildren<T>();
         }
 
-        public T[] GetComponentsInChildren<T>(GameObject invoker) where T : Object
+        public T[] GetComponentsInChildren<T>(GameObject invoker) where T : UnityEngine.Object
         {
             GameObject targetGo = this.GetGameObject(invoker);
             if (targetGo == null) return new T[0];
             return targetGo.GetComponentsInChildren<T>();
+        }
+
+        // EVENTS: --------------------------------------------------------------------------------
+
+        public void StartListeningVariableChanges(GameObject invoker)
+        {
+            switch (this.target)
+            {
+                case Target.GlobalVariable:
+                    VariablesManager.events.SetOnChangeGlobal(
+                        this.OnChangeVariable,
+                        this.global.name
+                    );
+                    break;
+
+                case Target.LocalVariable:
+                    VariablesManager.events.SetOnChangeLocal(
+                        this.OnChangeVariable,
+                        this.local.GetGameObject(invoker),
+                        this.local.name
+                    );
+                    break;
+
+                case Target.ListVariable:
+                    VariablesManager.events.StartListenListAny(
+                        this.OnChangeVariable,
+                        this.list.GetListVariables(invoker).gameObject
+                    );
+                    break;
+            }
+        }
+
+        public void StopListeningVariableChanges(GameObject invoker)
+        {
+            switch (this.target)
+            {
+                case Target.GlobalVariable:
+                    VariablesManager.events.RemoveChangeGlobal(
+                        this.OnChangeVariable,
+                        this.global.name
+                    );
+                    break;
+
+                case Target.LocalVariable:
+                    VariablesManager.events.RemoveChangeLocal(
+                        this.OnChangeVariable,
+                        this.local.GetGameObject(invoker),
+                        this.local.name
+                    );
+                    break;
+
+                case Target.ListVariable:
+                    VariablesManager.events.StopListenListAny(
+                        this.OnChangeVariable,
+                        this.list.GetListVariables(invoker).gameObject
+                    );
+                    break;
+            }
+        }
+
+        private void OnChangeVariable(string variableID)
+        {
+            this.eventChangeVariable.Invoke();
+        }
+
+        private void OnChangeVariable(int index, object prev, object next)
+        {
+            this.eventChangeVariable.Invoke();
         }
 
         // UTILITIES: -----------------------------------------------------------------------------

@@ -45,7 +45,7 @@
         private Animator animator;
         private Character character;
         private CharacterAnimator characterAnimator;
-        private ILocomotionDriver locomotionDriver;
+        private CharacterController controller;
 
         private Foot leftFoot;
         private Foot rightFoot;
@@ -56,6 +56,8 @@
         public CharacterAnimator.EventIK eventBeforeIK = new CharacterAnimator.EventIK();
         public CharacterAnimator.EventIK eventAfterIK = new CharacterAnimator.EventIK();
 
+        private RaycastHit[] hitBuffer = new RaycastHit[1];
+
         // INITIALIZERS: --------------------------------------------------------------------------
 
         public void Setup(Character character)
@@ -63,8 +65,8 @@
             this.character = character;
             this.characterAnimator = this.character.GetCharacterAnimator();
             this.animator = this.characterAnimator.animator;
-            this.locomotionDriver = gameObject.GetComponentInParent<ILocomotionDriver>();
-            if (this.animator == null || !this.animator.isHuman || this.locomotionDriver == null) return;
+            this.controller = gameObject.GetComponentInParent<CharacterController>();
+            if (this.animator == null || !this.animator.isHuman || this.controller == null) return;
 
             Transform lFoot = this.animator.GetBoneTransform(HumanBodyBones.LeftFoot);
             Transform rFoot = this.animator.GetBoneTransform(HumanBodyBones.RightFoot);
@@ -96,7 +98,7 @@
 
             if (!this.characterAnimator.useFootIK) return;
 
-            if (this.locomotionDriver.IsGrounded())
+            if (this.controller.isGrounded)
             {
                 UpdateFoot(this.leftFoot);
                 UpdateFoot(this.rightFoot);
@@ -110,20 +112,23 @@
 
         private void UpdateFoot(Foot foot)
         {
-            RaycastHit hit;
-
-            float rayMagnitude = this.locomotionDriver.GetHeight() / 2.0f;
+            float rayMagnitude = this.controller.height/2.0f;
             Vector3 rayPosition = foot.foot.position;
             rayPosition.y += rayMagnitude/2.0f;
 
-            int layerMask = Physics.DefaultRaycastLayers;
+            int layerMask = this.characterAnimator.footLayerMask;
             QueryTriggerInteraction queryTrigger = QueryTriggerInteraction.Ignore;
 
-            if (Physics.Raycast(rayPosition, -Vector3.up, out hit, rayMagnitude, layerMask, queryTrigger))
+            int hitCount = Physics.RaycastNonAlloc(
+                rayPosition, -Vector3.up, hitBuffer,
+                rayMagnitude, layerMask, queryTrigger
+            );
+
+            if (hitCount > 0)
             {
                 foot.hit = true;
-                foot.height = hit.point.y;
-                foot.normal = hit.normal;
+                foot.height = hitBuffer[0].point.y;
+                foot.normal = hitBuffer[0].normal;
             }
             else
             {
@@ -148,8 +153,8 @@
                 float baseHeight = this.transform.position.y - FOOT_OFFSET_Y;
                 float animHeight = (foot.foot.position.y - baseHeight) / (rotation * Vector3.up).y;
                 Vector3 position = new Vector3(
-                    foot.foot.position.x,
-                    Mathf.Max(foot.height, baseHeight) + animHeight,
+                    foot.foot.position.x, 
+                    Mathf.Max(foot.height, baseHeight) + animHeight, 
                     foot.foot.position.z
                 );
 
@@ -167,9 +172,9 @@
 
         private void WeightCompensationPosition()
         {
-            float position = this.locomotionDriver.transform.position.y + this.defaultOffset;
+            float position = this.controller.transform.position.y + this.defaultOffset;
 
-            if (this.locomotionDriver.IsGrounded())
+            if (this.controller.isGrounded)
             {
                 float targetHeight = transform.position.y;
 
@@ -179,8 +184,8 @@
                 targetHeight += FOOT_OFFSET_Y;
                 if (position > targetHeight)
                 {
-                    float maxDistance = this.locomotionDriver.transform.position.y + this.defaultOffset;
-                    maxDistance -= this.locomotionDriver.GetHeight() * 0.075f;
+                    float maxDistance = this.controller.transform.position.y + this.defaultOffset;
+                    maxDistance -= this.controller.height * 0.075f;
                     position = Mathf.Max(targetHeight, maxDistance);
                 }
             }
@@ -199,8 +204,8 @@
 
         private Vector3 GetControllerBase()
         {
-            Vector3 position = this.locomotionDriver.transform.TransformPoint(this.locomotionDriver.GetCenter());
-            position.y -= (this.locomotionDriver.GetHeight() * 0.5f - this.locomotionDriver.GetRadius());
+            Vector3 position = this.controller.transform.TransformPoint(this.controller.center);
+            position.y -= (this.controller.height * 0.5f - this.controller.radius);
 
             return position;
         }

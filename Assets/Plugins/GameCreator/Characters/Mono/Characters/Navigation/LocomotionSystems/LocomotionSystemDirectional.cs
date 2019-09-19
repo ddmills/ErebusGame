@@ -5,8 +5,9 @@
 	using UnityEngine;
 	using GameCreator.Core;
 	using GameCreator.Core.Hooks;
+    using System;
 
-	public class LocomotionSystemDirectional : ILocomotionSystem
+    public class LocomotionSystemDirectional : ILocomotionSystem 
 	{
 		// PROPERTIES: ----------------------------------------------------------------------------
 
@@ -25,35 +26,44 @@
 			}
 
 			Vector3 targetDirection = this.desiredDirection;
+            CharacterController controller = this.characterLocomotion.characterController;
+            Vector3 characterForward = controller.transform.TransformDirection(Vector3.forward);
 
-            float speed = this.CalculateSpeed(targetDirection, this.characterLocomotion.locomotionDriver.IsGrounded());
-			Quaternion targetRotation = this.UpdateRotation(targetDirection);
+            float targetSpeed = this.CalculateSpeed(targetDirection, controller.isGrounded);
 
-			this.UpdateAnimationConstraints(ref targetDirection, ref targetRotation);
-            this.UpdateSliding();
+            if (targetDirection == Vector3.zero)
+            {
+                targetDirection = this.movementDirection;
+                targetSpeed = 0f;
+            }
 
-            targetDirection = Vector3.ClampMagnitude(Vector3.Scale(targetDirection, HORIZONTAL_PLANE), 1.0f);
+            float speed = this.CalculateAccelerationFromSpeed(targetSpeed);
+            Quaternion targetRotation = this.UpdateRotation(targetDirection);
+
+            this.UpdateAnimationConstraints(ref targetDirection, ref targetRotation);
             targetDirection *= speed;
 
+            this.UpdateSliding();
+
             if (this.isSliding) targetDirection = this.slideDirection;
-            targetDirection += this.characterLocomotion.GetMomentum();
+            targetDirection += Vector3.up * this.characterLocomotion.verticalSpeed;
 
             if (this.isDashing)
             {
                 targetDirection = this.dashVelocity;
-                targetRotation = this.characterLocomotion.locomotionDriver.transform.rotation;
+                targetRotation = controller.transform.rotation;
             }
 
-						this.characterLocomotion.locomotionDriver.SetVelocity(targetDirection);
-			this.characterLocomotion.locomotionDriver.transform.rotation = targetRotation;
+            controller.Move(targetDirection * Time.deltaTime);
+			controller.transform.rotation = targetRotation;
 
-			if (this.characterLocomotion.navmeshAgent != null &&
+			if (this.characterLocomotion.navmeshAgent != null && 
                 this.characterLocomotion.navmeshAgent.isActiveAndEnabled)
 			{
                 this.characterLocomotion.navmeshAgent.enabled = false;
             }
 
-            return CharacterLocomotion.LOCOMOTION_SYSTEM.LocomotionDriver;
+            return CharacterLocomotion.LOCOMOTION_SYSTEM.CharacterController;
 		}
 
         public override void OnDestroy ()

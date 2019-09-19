@@ -94,9 +94,11 @@
         private Dictionary<int, AnimFloat> paramValues = new Dictionary<int, AnimFloat>();
 
         public bool useFootIK = true;
+        public LayerMask footLayerMask = Physics.DefaultRaycastLayers;
         public bool useHandIK = true;
         public bool useSmartHeadIK = true;
 
+        public bool autoInitializeRagdoll = true;
         [Tooltip("Total amount of mass of the character")]
         public float ragdollMass = 80f;
 
@@ -145,6 +147,8 @@
 
         private void Update()
 		{
+            if (!this.animator.gameObject.activeInHierarchy) return;
+
 			if (this.character  == null) throw new UnityException(EXC_NO_CHARACTER);
 			if (this.animator   == null) throw new UnityException(EXC_NO_ANIMATOR);
 			if (this.animEvents == null) this.GenerateAnimatorEvents();
@@ -160,14 +164,6 @@
             }
 
             Quaternion rotation = this.characterRotation.Update();
-
-            /*
-            this.currentRotation = Mathf.SmoothDampAngle(
-                this.currentRotation,
-                this.targetRotation,
-                ref this.speedRotation,
-                ROTATION_SMOOTH
-            );*/
 
 			Character.State state = this.character.GetCharacterState();
             Vector3 direction = (!this.character.enabled || state.forwardSpeed.magnitude < 0.01f 
@@ -399,6 +395,12 @@
         public Quaternion GetTargetRotation()
         {
             return this.characterRotation.GetTargetRotation();
+        }
+
+        public void SetVisibility(bool visible)
+        {
+            Debug.Log("Setting visibility: " + visible);
+            this.animator.gameObject.SetActive(visible);
         }
 
 		// PRIVATE METHODS: -----------------------------------------------------------------------

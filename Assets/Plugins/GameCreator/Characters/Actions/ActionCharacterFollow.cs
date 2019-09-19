@@ -31,11 +31,13 @@
         public override bool InstantExecute(GameObject target, IAction[] actions, int index)
         {
             Character charTarget = this.character.GetCharacter(target);
+            if (charTarget == null) return true;
+
             Transform follow = null;
+
             if (this.actionType == ActionType.Follow)
             {
-                GameObject targetGo = this.followTarget.GetGameObject(target);
-                if (targetGo != null) follow = targetGo.transform;
+                follow = this.followTarget.GetComponent<Transform>(target);
             }
 
             charTarget.characterLocomotion.FollowTarget(
