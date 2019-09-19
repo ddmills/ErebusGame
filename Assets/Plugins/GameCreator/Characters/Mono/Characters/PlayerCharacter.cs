@@ -44,7 +44,11 @@
         public LayerMask mouseLayerMask = ~0;
         public bool invertAxis = false;
 
-        public KeyCode jumpKey = KeyCode.Space;
+        public string jumpKey = "Jump";
+        public float jumpMomentumInitial = 6f;
+        public float jumpMomentumPost = 1f;
+        public float jumpMomentumPostDurationSeconds = 5;
+        private float currentJumpDurationStartTime = 0;
 
         private bool uiConstrained = false;
 
@@ -80,8 +84,19 @@
         }
 
         // UPDATE: --------------------------------------------------------------------------------
-
         private void Update()
+        {
+            if (Input.GetButtonDown(this.jumpKey) && this.IsControllable())
+            {
+                if (this.IsGrounded())
+                {
+                    this.AddMomentum(Vector3.up * jumpMomentumInitial);
+                    this.currentJumpDurationStartTime = Time.fixedTime;
+                }
+            }
+        }
+
+        private void FixedUpdate()
         {
             if (!Application.isPlaying) return;
 
@@ -96,7 +111,15 @@
 
             if (this.IsControllable())
             {
-                if (Input.GetKeyDown(this.jumpKey)) this.Jump();
+                if (Input.GetButton(this.jumpKey))
+                {
+                    float currentJumpDurationSeconds = Time.fixedTime - this.currentJumpDurationStartTime;
+
+                     if (currentJumpDurationSeconds <= this.jumpMomentumPostDurationSeconds)
+                    {
+                        this.AddMomentum(Vector3.up * jumpMomentumPost);
+                    }
+                }
             }
 
             this.CharacterUpdate();
@@ -126,7 +149,10 @@
 
             Vector3 moveDirection = maincam.transform.TransformDirection(direction);
             moveDirection.Scale(PLANE);
-            moveDirection.Normalize();
+            if (moveDirection.magnitude > 1f)
+            {
+                moveDirection.Normalize();
+            }
             this.characterLocomotion.SetDirectionalDirection(moveDirection);
         }
 

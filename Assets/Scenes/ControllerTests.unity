@@ -1751,6 +1751,11 @@ MonoBehaviour:
       targetObject: {fileID: 0}
       select: 1
       index: 0
+    eventChangeVariable:
+      m_PersistentCalls:
+        m_Calls: []
+      m_TypeName: GameCreator.Core.TargetGameObject+ChangeEvent, Assembly-CSharp-firstpass,
+        Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
   targetOffset: {x: 0, y: 1, z: 0}
   pivotOffset: {x: 0, y: 0, z: 2}
   allowOrbitInput: 1
@@ -1768,6 +1773,8 @@ MonoBehaviour:
   wallClipLayerMask:
     serializedVersion: 2
     m_Bits: 4294967291
+  autoRepositionBehind: 0
+  autoRepositionSpeed: 2.5
 --- !u!1001 &1180135465
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4388,8 +4395,10 @@ MonoBehaviour:
   characterLocomotion:
     isControllable: 1
     runSpeed: 6
+    acceleration: 100
+    deceleration: 100
     angularSpeed: 540
-    gravity: -9.81
+    gravity: -22
     maxFallSpeed: -100
     canRun: 1
     canJump: 1
@@ -4460,8 +4469,8 @@ MonoBehaviour:
     m_Bits: 4294967295
   invertAxis: 0
   jumpKey: Jump
-  jumpMomentumInitial: 5.5
-  jumpMomentumPost: 0.125
+  jumpMomentumInitial: 10
+  jumpMomentumPost: 0.24
   jumpMomentumPostDurationSeconds: 1
 --- !u!114 &2995341578765770285
 MonoBehaviour:
@@ -4478,8 +4487,12 @@ MonoBehaviour:
   animator: {fileID: 2995341579543482905}
   defaultState: {fileID: 11400000, guid: 0c58b96410a1fef499645275e44ae997, type: 2}
   useFootIK: 1
+  footLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967291
   useHandIK: 1
   useSmartHeadIK: 1
+  autoInitializeRagdoll: 1
   ragdollMass: 80
   stableTimeout: 0.5
   standFaceDown: {fileID: 74060096437904604, guid: e3a2eebe549364235b59f9dfdc456c61,
@@ -6312,6 +6325,11 @@ MonoBehaviour:
       targetObject: {fileID: 0}
       select: 1
       index: 0
+    eventChangeVariable:
+      m_PersistentCalls:
+        m_Calls: []
+      m_TypeName: GameCreator.Core.TargetCharacter+ChangeEvent, Assembly-CSharp-firstpass,
+        Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
 --- !u!114 &4123036837505946666
 MonoBehaviour:
   m_ObjectHideFlags: 3
