@@ -275,6 +275,8 @@
             }
         }
 
+        private RaycastHit[] hitBuffer = new RaycastHit[10];
+
         private void ToRecover()
         {
             this.state = State.Recover;
@@ -285,14 +287,14 @@
                 this.chunks[i].Snapshot(false);
             }
 
-            RaycastHit[] hits = Physics.RaycastAll(this.root.anchor.position, Vector3.down, 5f);
-            for (int i = 0; i < hits.Length; ++i)
+            int hitCount = Physics.RaycastNonAlloc(this.root.anchor.position, Vector3.down, hitBuffer, 5f);
+            for (int i = 0; i < hitCount; ++i)
             {
-                if (!hits[i].transform.IsChildOf(this.character.transform) &&
-                    !hits[i].transform.IsChildOf(root.anchor))
+                if (!this.hitBuffer[i].transform.IsChildOf(this.character.transform) &&
+                    !this.hitBuffer[i].transform.IsChildOf(root.anchor))
                 {
                     float offset = this.character.characterLocomotion.locomotionDriver.GetSkinWidth();
-                    this.character.transform.position = hits[i].point + (Vector3.up * offset);
+                    this.character.transform.position = this.hitBuffer[i].point + (Vector3.up * offset);
                     break;
                 }
             }

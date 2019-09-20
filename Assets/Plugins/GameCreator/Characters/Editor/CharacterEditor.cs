@@ -11,7 +11,7 @@
 	using GameCreator.Core;
 
 	[CustomEditor(typeof(Character), true)]
-	public class CharacterEditor : Editor
+	public class CharacterEditor : Editor 
 	{
 		public class Section
 		{
@@ -69,10 +69,12 @@
         private const string PROP_JMPNUM = "jumpTimes";
         private const string PROP_JMPTIM = "timeBetweenJumps";
         private const string PROP_ANGSPD = "angularSpeed";
+        private const string PROP_ACCELE = "acceleration";
+        private const string PROP_DECELE = "deceleration";
         private const string PROP_GRAVTY = "gravity";
         private const string PROP_FALLSP = "maxFallSpeed";
         private const string PROP_SAVEOB = "save";
-
+        
 		private const string PROP_FACEDR = "faceDirection";
         private const string PROP_FACEDT = "faceDirectionTarget";
 		private const string PROP_NAVMES = "canUseNavigationMesh";
@@ -86,6 +88,8 @@
 		protected SerializedProperty spIsControllable;
 		protected SerializedProperty spRunSpeed;
 		protected SerializedProperty spAngularSpeed;
+        protected SerializedProperty spAcceleration;
+        protected SerializedProperty spDeceleration;
 		protected SerializedProperty spCanRun;
 		protected SerializedProperty spCanJump;
 		protected SerializedProperty spJumpForce;
@@ -117,6 +121,8 @@
 			this.spIsControllable = spCharLocomotion.FindPropertyRelative(PROP_ISCONT);
 			this.spRunSpeed       = spCharLocomotion.FindPropertyRelative(PROP_RUNSPD);
 			this.spAngularSpeed   = spCharLocomotion.FindPropertyRelative(PROP_ANGSPD);
+            this.spAcceleration   = spCharLocomotion.FindPropertyRelative(PROP_ACCELE);
+            this.spDeceleration   = spCharLocomotion.FindPropertyRelative(PROP_DECELE);
             this.spGravity        = spCharLocomotion.FindPropertyRelative(PROP_GRAVTY);
             this.spMaxFallSpeed   = spCharLocomotion.FindPropertyRelative(PROP_FALLSP);
 			this.spCanRun         = spCharLocomotion.FindPropertyRelative(PROP_CANRUN);
@@ -174,6 +180,8 @@
 					EditorGUILayout.PropertyField(this.spCanRun);
 					EditorGUILayout.PropertyField(this.spRunSpeed);
 					EditorGUILayout.PropertyField(this.spAngularSpeed);
+                    EditorGUILayout.PropertyField(this.spAcceleration);
+                    EditorGUILayout.PropertyField(this.spDeceleration);
                     EditorGUILayout.PropertyField(this.spGravity);
                     EditorGUILayout.PropertyField(this.spMaxFallSpeed);
 					EditorGUI.indentLevel--;

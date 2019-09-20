@@ -45,7 +45,7 @@
         public bool invertAxis = false;
 
         public string jumpKey = "Jump";
-        public float jumpMomentumInitial = 15f;
+        public float jumpMomentumInitial = 6f;
         public float jumpMomentumPost = 1f;
         public float jumpMomentumPostDurationSeconds = 5;
         private float currentJumpDurationStartTime = 0;
@@ -115,7 +115,7 @@
                 {
                     float currentJumpDurationSeconds = Time.fixedTime - this.currentJumpDurationStartTime;
 
-                    if (currentJumpDurationSeconds <= this.jumpMomentumPostDurationSeconds)
+                     if (currentJumpDurationSeconds <= this.jumpMomentumPostDurationSeconds)
                     {
                         this.AddMomentum(Vector3.up * jumpMomentumPost);
                     }

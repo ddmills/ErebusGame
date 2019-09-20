@@ -29,10 +29,23 @@
 
         public override bool InstantExecute(GameObject target, IAction[] actions, int index)
         {
-            if (this.actions != null && this.actions.actionsList != null)
+            Actions targetActions = null;
+            switch (this.source)
             {
-                if (this.stopImmidiately) this.actions.Stop();
-                else this.actions.actionsList.Cancel();
+                case Source.Actions:
+                    targetActions = this.actions;
+                    break;
+
+                case Source.Variable:
+                    GameObject value = this.variable.Get(target) as GameObject;
+                    if (value != null) targetActions = value.GetComponentInChildren<Actions>();
+                    break;
+            }
+
+            if (targetActions != null && targetActions.actionsList != null)
+            {
+                if (this.stopImmidiately) targetActions.Stop();
+                else targetActions.actionsList.Cancel();
             }
 
             return true;

@@ -47,8 +47,12 @@
                 }
                 else
                 {
-                    // Vector3 defaultDirection = Vector3.up * this.characterLocomotion.verticalSpeed;
-                    this.characterLocomotion.locomotionDriver.SetVelocity(Vector3.zero);
+                    Vector3 defaultDirection = Vector3.up * this.characterLocomotion.verticalSpeed;
+
+                    float speed = this.CalculateAccelerationFromSpeed(0f);
+                    defaultDirection += this.aimDirection * speed;
+
+                    this.characterLocomotion.locomotionDriver.SetVelocity(defaultDirection);
                 }
 
 				return (this.usingNavmesh
@@ -59,14 +63,14 @@
 
             this.isFollowing = true;
 
-            ILocomotionDriver locomotionDriver = this.characterLocomotion.locomotionDriver;
-
             if (this.usingNavmesh)
             {
                 NavMeshAgent agent = this.characterLocomotion.navmeshAgent;
                 agent.enabled = true;
                 agent.updatePosition = true;
                 agent.updateUpAxis = true;
+
+                ILocomotionDriver locomotionDriver = this.characterLocomotion.locomotionDriver;
 
                 NavMeshHit hit = new NavMeshHit();
                 NavMesh.SamplePosition(this.targetTransform.position, out hit, 1.0f, NavMesh.AllAreas);
@@ -88,15 +92,16 @@
                 if (this.characterLocomotion.navmeshAgent != null)
                 {
                     this.characterLocomotion.navmeshAgent.enabled = false;
-                    //this.characterLocomotion.navmeshAgent.updatePosition = false;
-                    //this.characterLocomotion.navmeshAgent.updateUpAxis = false;
                 }
 
+                ILocomotionDriver locomotionDriver = this.characterLocomotion.locomotionDriver;
                 Vector3 targetPosition = Vector3.Scale(this.targetTransform.position, HORIZONTAL_PLANE);
                 targetPosition += Vector3.up * currPosition.y;
                 Vector3 targetDirection = (targetPosition - currPosition).normalized;
-
                 float speed = this.CalculateSpeed(targetDirection, locomotionDriver.IsGrounded());
+
+                speed = this.CalculateAccelerationFromSpeed(speed);
+
                 Quaternion targetRotation = this.UpdateRotation(targetDirection);
 
                 this.UpdateAnimationConstraints(ref targetDirection, ref targetRotation);
@@ -109,7 +114,7 @@
 
                 if (this.characterLocomotion.navmeshAgent != null && this.characterLocomotion.navmeshAgent.isOnNavMesh)
                 {
-                    Vector3 position = locomotionDriver.transform.position;
+                    Vector3 position = this.characterLocomotion.locomotionDriver.transform.position;
                     this.characterLocomotion.navmeshAgent.Warp(position);
                 }
 
@@ -131,7 +136,7 @@
 			{
 				if (agent.velocity == Vector3.zero)
 				{
-					agent.Move(agent.transform.forward * agent.speed * Time.fixedDeltaTime);
+					agent.Move(agent.transform.forward * agent.speed * Time.deltaTime);
 				}
 			}
 

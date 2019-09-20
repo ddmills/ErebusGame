@@ -24,6 +24,7 @@
         private const string INPUT_MOUSE_X = "Mouse X";
         private const string INPUT_MOUSE_Y = "Mouse Y";
         private const string INPUT_MOUSE_W = "Mouse ScrollWheel";
+        private const float RECOVER_DELAY = 1.5f;
 
         public static new string NAME = "Adventure Camera";
         public static Rect MOBILE_RECT = new Rect(0.5f, 0.0f, 0.5f, 1.0f);
@@ -43,6 +44,7 @@
         public bool allowOrbitInput = true;
         public OrbitInput orbitInput = OrbitInput.MouseMove;
         public float orbitSpeed = 25.0f;
+        private float orbitInputTime = -1000f;
 
         [Range(0.0f, 180f)] public float maxPitch = 120f;
         public Vector2 sensitivity = new Vector2(10f, 10f);
@@ -62,6 +64,13 @@
         public bool avoidWallClip = true;
         public float wallClipRadius = 0.4f;
         public LayerMask wallClipLayerMask = ~4;
+
+        public bool autoRepositionBehind = true;
+        public float autoRepositionSpeed = 2.5f;
+        private float recoverSpeedX = 0f;
+        private float recoverSpeedY = 0f;
+
+        private RaycastHit[] hitsBuffer = new RaycastHit[100];
 
         // INITIALIZERS: --------------------------------------------------------------------------
 
@@ -112,6 +121,11 @@
             this.targetRotationX += rotationX;
             this.targetRotationY += rotationY;
 
+            if (this.autoRepositionBehind && this.orbitInputTime + RECOVER_DELAY < Time.time)
+            {
+                this.RotationRecover();
+            }
+
             this.targetRotationX %= 360f;
             this.targetRotationY %= 360f;
 
@@ -138,7 +152,7 @@
                 this.targetRotationX, 
                 0f
             );
-                
+
             transform.rotation = Quaternion.Lerp(
                 transform.rotation, 
                 targetRotation, 
@@ -196,20 +210,20 @@
 
             if (this.avoidWallClip && HookCamera.Instance != null)
             {
-                Vector3 direction = this.pivot.transform.position - transform.position;
+                Vector3 direction = (this.pivot.transform.position - transform.position).normalized;
                 QueryTriggerInteraction queryTrigger = QueryTriggerInteraction.Ignore;
 
-                RaycastHit[] hits = Physics.SphereCastAll(
-                    transform.position + (direction.normalized * this.wallClipRadius), 
-                    this.wallClipRadius, direction, this.zoomLimits.y,
+                int hitCount = Physics.SphereCastNonAlloc(
+                    transform.position + (direction * this.wallClipRadius), 
+                    this.wallClipRadius, direction, hitsBuffer, this.zoomLimits.y,
                     this.wallClipLayerMask, queryTrigger
                 );
 
                 float minDistance = this.zoomLimits.y;
-                for (int i = 0; i < hits.Length; ++i)
+                for (int i = 0; i < hitCount; ++i)
                 {
-                    float hitDistance = hits[i].distance + this.wallClipRadius;
-                    bool childOfTarget = hits[i].collider.transform.IsChildOf(
+                    float hitDistance = this.hitsBuffer[i].distance + this.wallClipRadius;
+                    bool childOfTarget = this.hitsBuffer[i].collider.transform.IsChildOf(
                         this.target.GetTransform(gameObject)
                     );
 
@@ -244,6 +258,9 @@
                     {
                         rotationX = (touch.deltaPosition.x / Screen.width) * this.sensitivity.x * 10f * Time.timeScale;
                         rotationY = (touch.deltaPosition.y / Screen.height) * this.sensitivity.y * 10f * Time.timeScale;
+                        orbitInputTime = Time.time;
+                        this.recoverSpeedX = 0f;
+                        this.recoverSpeedY = 0f;
                         break;
                     }
                 }
@@ -259,10 +276,39 @@
 
                 if (inputConditions)
                 {
-                    rotationX = Input.GetAxis(INPUT_MOUSE_X) * this.sensitivity.x * Time.timeScale;
-                    rotationY = Input.GetAxis(INPUT_MOUSE_Y) * this.sensitivity.y * Time.timeScale;
+                    float axisX = Input.GetAxis(INPUT_MOUSE_X);
+                    float axisY = Input.GetAxis(INPUT_MOUSE_Y);
+
+                    rotationX = axisX * this.sensitivity.x * Time.timeScale;
+                    rotationY = axisY * this.sensitivity.y * Time.timeScale;
+
+                    if (!Mathf.Approximately(axisX, 0f) || !Mathf.Approximately(axisY, 0f))
+                    {
+                        orbitInputTime = Time.time;
+                        this.recoverSpeedX = 0f;
+                        this.recoverSpeedY = 0f;
+                    }
                 }
             }
+        }
+
+        private void RotationRecover()
+        {
+            Transform targetTransform = this.target.GetTransform(gameObject);
+            if (targetTransform == null) return;
+
+            float targetRecoverX = targetTransform.eulerAngles.y + 180f;
+            float targetRecoverY = targetTransform.eulerAngles.x;
+
+            this.targetRotationX = Mathf.SmoothDampAngle(
+                this.targetRotationX, targetRecoverX,
+                ref this.recoverSpeedX, this.autoRepositionSpeed
+            );
+
+            this.targetRotationY = Mathf.SmoothDampAngle(
+                this.targetRotationY, targetRecoverY,
+                ref this.recoverSpeedY, this.autoRepositionSpeed
+            );
         }
     }
 }

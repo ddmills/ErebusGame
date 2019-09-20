@@ -21,6 +21,8 @@
         public float radius = 0.3f;
         public LayerMask layerMask = -1;
 
+        private Collider[] colliderBuffer = new Collider[50];
+
 		// EXECUTABLE: ----------------------------------------------------------------------------
 
 		public override bool Check(GameObject target)
@@ -32,10 +34,11 @@
             Vector3 point1 = charTarget.transform.position + (Vector3.up * (this.radius + OFFSET));
             Vector3 point2 = point1 + (Vector3.up * minHeight);
 
-            Collider[] colliders = Physics.OverlapCapsule(
+            int colliderCount = Physics.OverlapCapsuleNonAlloc(
                 point1,
                 point2,
                 this.radius,
+                this.colliderBuffer,
                 this.layerMask,
                 QueryTriggerInteraction.Ignore
             );
@@ -54,10 +57,10 @@
                 1.0f
             );
                 
-            for (int i = 0; i < colliders.Length; ++i)
+            for (int i = 0; i < colliderCount; ++i)
             {
-                if (colliders[i].gameObject.GetInstanceID() != charTarget.gameObject.GetInstanceID() &&
-                    !colliders[i].transform.IsChildOf(charTarget.transform))
+                if (this.colliderBuffer[i].gameObject.GetInstanceID() != charTarget.gameObject.GetInstanceID() &&
+                    !this.colliderBuffer[i].transform.IsChildOf(charTarget.transform))
                 {
                     return false;
                 }

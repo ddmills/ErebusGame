@@ -56,6 +56,8 @@
         public CharacterAnimator.EventIK eventBeforeIK = new CharacterAnimator.EventIK();
         public CharacterAnimator.EventIK eventAfterIK = new CharacterAnimator.EventIK();
 
+        private RaycastHit[] hitBuffer = new RaycastHit[1];
+
         // INITIALIZERS: --------------------------------------------------------------------------
 
         public void Setup(Character character)
@@ -110,20 +112,23 @@
 
         private void UpdateFoot(Foot foot)
         {
-            RaycastHit hit;
-
-            float rayMagnitude = this.locomotionDriver.GetHeight() / 2.0f;
+            float rayMagnitude = this.locomotionDriver.GetHeight()/2.0f;
             Vector3 rayPosition = foot.foot.position;
             rayPosition.y += rayMagnitude/2.0f;
 
-            int layerMask = Physics.DefaultRaycastLayers;
+            int layerMask = this.characterAnimator.footLayerMask;
             QueryTriggerInteraction queryTrigger = QueryTriggerInteraction.Ignore;
 
-            if (Physics.Raycast(rayPosition, -Vector3.up, out hit, rayMagnitude, layerMask, queryTrigger))
+            int hitCount = Physics.RaycastNonAlloc(
+                rayPosition, -Vector3.up, hitBuffer,
+                rayMagnitude, layerMask, queryTrigger
+            );
+
+            if (hitCount > 0)
             {
                 foot.hit = true;
-                foot.height = hit.point.y;
-                foot.normal = hit.normal;
+                foot.height = hitBuffer[0].point.y;
+                foot.normal = hitBuffer[0].normal;
             }
             else
             {

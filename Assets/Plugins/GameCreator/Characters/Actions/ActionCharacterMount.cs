@@ -20,14 +20,10 @@
             Character _character = this.character.GetCharacter(target);
             if (_character == null) return true;
 
-            CharacterLocomotion locomotion = _character.characterLocomotion;
-            ILocomotionDriver locomotionDriver = locomotion.locomotionDriver;
+            ILocomotionDriver locomotionDriver = _character.characterLocomotion.locomotionDriver;
 
             _character.enabled = !this.mounted;
-            if (locomotionDriver != null)
-            {
-                locomotionDriver.SetCollisionDetection(!this.mounted);
-            }
+            locomotionDriver.SetCollisionDetection(!this.mounted);
 
             return true;
         }

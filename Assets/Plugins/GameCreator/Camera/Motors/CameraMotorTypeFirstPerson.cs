@@ -70,16 +70,8 @@
 
             if (this.hidePlayerModel)
             {
-                this.renderersPlayerModel = new List<Renderer>();
-                Renderer[] renderers = target.GetComponentsInChildren<Renderer>();
-                for (int i = 0; i < renderers.Length; ++i)
-                {
-                    if (renderers[i].enabled)
-                    {
-                        this.renderersPlayerModel.Add(renderers[i]);
-                        renderers[i].enabled = false;
-                    }
-                }
+                CharacterAnimator animator = HookPlayer.Instance.Get<CharacterAnimator>();
+                animator.SetVisibility(false);
             }
         }
 
@@ -87,13 +79,8 @@
         {
             if (this.hidePlayerModel)
             {
-                for (int i = 0; i < this.renderersPlayerModel.Count; ++i)
-                {
-                    if (this.renderersPlayerModel[i] != null)
-                    {
-                        this.renderersPlayerModel[i].enabled = true;
-                    }
-                }
+                CharacterAnimator animator = HookPlayer.Instance.Get<CharacterAnimator>();
+                animator.SetVisibility(true);
             }
         }
 

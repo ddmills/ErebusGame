@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Config
   m_EditorClassIdentifier: 
   version:
-    major: 0
-    minor: 9
-    patch: 9
+    major: 1
+    minor: 0
+    patch: 1
   interactiveInstall: 1
   removeDirectories:
   - Plugins/GameCreator/Camera/

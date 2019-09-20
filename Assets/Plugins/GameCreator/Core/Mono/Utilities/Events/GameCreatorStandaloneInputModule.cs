@@ -5,6 +5,7 @@
     using UnityEngine;
     using UnityEngine.EventSystems;
 
+    [AddComponentMenu("")]
     public class GameCreatorStandaloneInputModule : StandaloneInputModule
     {
         public GameObject GameObjectUnderPointer(int pointerId)

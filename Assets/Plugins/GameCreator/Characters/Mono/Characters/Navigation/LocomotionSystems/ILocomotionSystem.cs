@@ -6,8 +6,9 @@
 	using UnityEngine.Events;
 	using GameCreator.Core;
 	using GameCreator.Core.Hooks;
+    using System;
 
-	public abstract class ILocomotionSystem
+    public abstract class ILocomotionSystem
 	{
 		public class TargetRotation
 		{
@@ -196,7 +197,7 @@
 
 		protected float CalculateSpeed(Vector3 targetDirection, bool isGrounded)
 		{
-			float speed = (this.characterLocomotion.canRun
+			float targetSpeed = (this.characterLocomotion.canRun
 				? this.characterLocomotion.runSpeed
                 : this.characterLocomotion.runSpeed / 2.0f
 			);
@@ -210,11 +211,27 @@
 				Quaternion dstRotation = Quaternion.LookRotation(targetDirection);
                 float angle = Quaternion.Angle(srcRotation, dstRotation) / 180.0f;
                 float speedDampening = Mathf.Clamp(1.0f - angle, 0.5f, 1.0f);
-				speed *= speedDampening;
+                targetSpeed *= speedDampening;
 			}
 
-			return speed;
+			return targetSpeed;
 		}
+
+        protected float CalculateAccelerationFromSpeed(float targetSpeed)
+        {
+            float speed = Vector3.Scale(
+                this.characterLocomotion.locomotionDriver.GetVelocity(),
+                HORIZONTAL_PLANE
+            ).magnitude;
+
+            float increment = this.characterLocomotion.acceleration * Time.fixedDeltaTime;
+            float decrement = this.characterLocomotion.deceleration * Time.fixedDeltaTime;
+
+            if (speed < targetSpeed) speed = Mathf.Min(targetSpeed, speed + increment);
+            else if (speed > targetSpeed) speed = Mathf.Max(0, speed - decrement);
+
+            return speed;
+        }
 
 		protected virtual void UpdateAnimationConstraints(ref Vector3 targetDirection, ref Quaternion targetRotation)
 		{
@@ -244,10 +261,9 @@
             if (this.isSliding)
             {
                 this.isSliding = true;
-                this.slideDirection = Vector3.Scale(
-                    this.characterLocomotion.terrainNormal,
-                    new Vector3(1f, 0f, 1f)
-                ).normalized * this.characterLocomotion.runSpeed;
+                this.slideDirection = Vector3.Reflect(
+                    Vector3.down, this.characterLocomotion.terrainNormal
+                ) * this.characterLocomotion.runSpeed;
             }
             else
             {

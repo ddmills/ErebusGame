@@ -31,8 +31,8 @@
 			{
 				if (!this.usingNavmesh)
 				{
-					// Vector3 defaultDirection = Vector3.up * this.characterLocomotion.verticalSpeed;
-					this.characterLocomotion.locomotionDriver.SetVelocity(Vector3.zero);
+					Vector3 defaultDirection = Vector3.up * this.characterLocomotion.verticalSpeed;
+                    this.characterLocomotion.locomotionDriver.SetVelocity(defaultDirection);
                     return CharacterLocomotion.LOCOMOTION_SYSTEM.LocomotionDriver;
                 }
 
@@ -45,6 +45,7 @@
 				NavMeshAgent agent = this.characterLocomotion.navmeshAgent;
                 agent.enabled = true;
 
+                ILocomotionDriver locomotionDriver = this.characterLocomotion.locomotionDriver;
                 if (agent.pathPending) return CharacterLocomotion.LOCOMOTION_SYSTEM.NavigationMeshAgent;
 
                 if (!agent.hasPath || agent.pathStatus != NavMeshPathStatus.PathComplete)
@@ -65,7 +66,7 @@
 
                 float remainingDistance = agent.remainingDistance;
 				bool isGrounded = agent.isOnOffMeshLink;
-				agent.speed = this.CalculateSpeed(this.characterLocomotion.locomotionDriver.transform.forward, isGrounded);
+				agent.speed = this.CalculateSpeed(locomotionDriver.transform.forward, isGrounded);
 				agent.angularSpeed = this.characterLocomotion.angularSpeed;
 
 				agent.isStopped = false;
@@ -102,12 +103,14 @@
 				Vector3 targetDirection = (targetPos - locomotionDriver.transform.position).normalized;
 
 				float speed = this.CalculateSpeed(targetDirection, locomotionDriver.IsGrounded());
+                speed = this.CalculateAccelerationFromSpeed(speed);
+
                 Quaternion targetRot = this.UpdateRotation(targetDirection);
 
 				this.UpdateAnimationConstraints(ref targetDirection, ref targetRot);
 
 				targetDirection = Vector3.Scale(targetDirection, HORIZONTAL_PLANE) * speed;
-				targetDirection += this.characterLocomotion.GetMomentum();
+				targetDirection += Vector3.up * this.characterLocomotion.verticalSpeed;
 
 				locomotionDriver.SetVelocity(targetDirection);
 				locomotionDriver.transform.rotation = targetRot;
@@ -186,7 +189,7 @@
 			{
 				if (agent.velocity == Vector3.zero)
 				{
-					agent.Move(agent.transform.forward * agent.speed * Time.fixedDeltaTime);
+					agent.Move(agent.transform.forward * agent.speed * Time.deltaTime);
 				}
 			}
 
@@ -205,17 +208,22 @@
 			}
 		}
 
-		// PUBLIC METHODS: ------------------------------------------------------------------------
+        // PUBLIC METHODS: ------------------------------------------------------------------------
+
+        private RaycastHit[] hitBuffer = new RaycastHit[1];
 
         public void SetTarget(Ray ray, LayerMask layerMask, TargetRotation rotation,
             float stopThreshold, UnityAction callback = null)
 		{
-            RaycastHit hit;
-
             QueryTriggerInteraction queryTrigger = QueryTriggerInteraction.Ignore;
-            if (Physics.Raycast(ray, out hit, Mathf.Infinity, layerMask, queryTrigger))
+            int hitCount = Physics.RaycastNonAlloc(
+                ray, this.hitBuffer, Mathf.Infinity,
+                layerMask, queryTrigger
+            );
+
+            if (hitCount > 0)
 			{
-				this.SetTarget(hit.point, rotation, stopThreshold, callback);
+				this.SetTarget(this.hitBuffer[0].point, rotation, stopThreshold, callback);
 			}
 		}
 

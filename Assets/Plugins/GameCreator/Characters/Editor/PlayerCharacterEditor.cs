@@ -53,7 +53,6 @@
       this.spJumpMomentumInitial = serializedObject.FindProperty(PROP_JUMP_MOMENTUM_INITIAL);
       this.spJumpMomentumPost = serializedObject.FindProperty(PROP_JUMP_MOMENTUM_POST);
       this.spJumpMomentumPostDurationSeconds = serializedObject.FindProperty(PROP_JUMP_POST_MOMENTUM_DURATION_S);
-
       if (this.spMouseLayerMask.intValue == 0)
       {
         this.spMouseLayerMask.intValue = ~0;

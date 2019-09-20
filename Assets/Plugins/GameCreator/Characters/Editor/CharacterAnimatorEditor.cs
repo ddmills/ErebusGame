@@ -32,9 +32,11 @@
         private bool isDraggingModel = false;
 
         private SerializedProperty spUseFootIK;
+        private SerializedProperty spFootLayerMask;
         private SerializedProperty spUseHandIK;
         private SerializedProperty spUseSmartHeadIK;
 
+        private SerializedProperty spAutoInitRagdoll;
         private SerializedProperty spRagdollMass;
         private SerializedProperty spStableTimeout;
         private SerializedProperty spStandFaceUp;
@@ -62,9 +64,11 @@
             this.spDefaultState = serializedObject.FindProperty("defaultState");
 
             this.spUseFootIK = serializedObject.FindProperty("useFootIK");
+            this.spFootLayerMask = serializedObject.FindProperty("footLayerMask");
             this.spUseHandIK = serializedObject.FindProperty("useHandIK");
             this.spUseSmartHeadIK = serializedObject.FindProperty("useSmartHeadIK");
 
+            this.spAutoInitRagdoll = serializedObject.FindProperty("autoInitializeRagdoll");
             this.spRagdollMass = serializedObject.FindProperty("ragdollMass");
             this.spStableTimeout = serializedObject.FindProperty("stableTimeout");
             this.spStandFaceUp = serializedObject.FindProperty("standFaceUp");
@@ -132,6 +136,13 @@
                 {
                     EditorGUILayout.BeginVertical(CoreGUIStyles.GetBoxExpanded());
                     EditorGUILayout.PropertyField(this.spUseFootIK);
+                    if (this.spUseFootIK.boolValue)
+                    {
+                        EditorGUI.indentLevel++;
+                        EditorGUILayout.PropertyField(this.spFootLayerMask);
+                        EditorGUI.indentLevel--;
+                    }
+
                     EditorGUILayout.PropertyField(this.spUseHandIK);
                     EditorGUILayout.PropertyField(this.spUseSmartHeadIK);
                     EditorGUILayout.EndVertical();
@@ -147,6 +158,7 @@
                 if (group.visible)
                 {
                     EditorGUILayout.BeginVertical(CoreGUIStyles.GetBoxExpanded());
+                    EditorGUILayout.PropertyField(this.spAutoInitRagdoll);
                     EditorGUILayout.PropertyField(this.spRagdollMass);
                     EditorGUILayout.PropertyField(this.spStableTimeout);
                     EditorGUILayout.Space();

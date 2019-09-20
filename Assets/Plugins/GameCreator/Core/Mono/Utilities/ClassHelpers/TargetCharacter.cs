@@ -1,9 +1,11 @@
 ﻿namespace GameCreator.Core
 {
+    using System;
 	using System.Collections;
 	using System.Collections.Generic;
 	using UnityEngine;
-	using GameCreator.Core.Hooks;
+    using UnityEngine.Events;
+    using GameCreator.Core.Hooks;
     using GameCreator.Characters;
     using GameCreator.Variables;
 
@@ -20,7 +22,10 @@
             ListVariable
 		}
 
-		// PROPERTIES: ----------------------------------------------------------------------------
+        [Serializable]
+        public class ChangeEvent : UnityEvent { }
+
+        // PROPERTIES: ----------------------------------------------------------------------------
 
         public Target target = Target.Character;
         public Character character;
@@ -30,6 +35,8 @@
 
         private int cacheInstanceID;
         private Character cacheCharacter;
+
+        public ChangeEvent eventChangeVariable = new ChangeEvent();
 
         // INITIALIZERS: --------------------------------------------------------------------------
 
@@ -51,8 +58,9 @@
     				break;
 
     			case Target.Invoker:
-                    this.cacheCharacter = invoker.GetComponentInChildren<Character>();
-    				break;
+                    if (this.cacheCharacter == null) this.cacheCharacter = invoker.GetComponentInChildren<Character>();
+                    if (this.cacheCharacter == null) this.cacheCharacter = invoker.GetComponentInParent<Character>();
+                    break;
 
                 case Target.Character:
     				if (this.character != null) this.cacheCharacter = this.character;
@@ -63,6 +71,7 @@
                     if (localResult != null && localResult.GetInstanceID() != this.cacheInstanceID)
                     {
                         this.cacheCharacter = localResult.GetComponentInChildren<Character>();
+                        if (this.cacheCharacter == null) localResult.GetComponentInParent<Character>();
                     }
                     break;
 
@@ -71,6 +80,7 @@
                     if (globalResult != null && globalResult.GetInstanceID() != this.cacheInstanceID)
                     {
                         this.cacheCharacter = globalResult.GetComponentInChildren<Character>();
+                        if (this.cacheCharacter == null) globalResult.GetComponentInParent<Character>();
                     }
                     break;
 
@@ -79,6 +89,7 @@
                     if (listResult != null && listResult.GetInstanceID() != this.cacheInstanceID)
                     {
                         this.cacheCharacter = listResult.GetComponentInChildren<Character>();
+                        if (this.cacheCharacter == null) listResult.GetComponentInParent<Character>();
                     }
                     break;
             }
@@ -91,9 +102,77 @@
 			return this.cacheCharacter;
 		}
 
-		// UTILITIES: -----------------------------------------------------------------------------
+        // EVENTS: --------------------------------------------------------------------------------
 
-		public override string ToString ()
+        public void StartListeningVariableChanges(GameObject invoker)
+        {
+            switch (this.target)
+            {
+                case Target.GlobalVariable:
+                    VariablesManager.events.SetOnChangeGlobal(
+                        this.OnChangeVariable,
+                        this.global.name
+                    );
+                    break;
+
+                case Target.LocalVariable:
+                    VariablesManager.events.SetOnChangeLocal(
+                        this.OnChangeVariable,
+                        this.local.GetGameObject(invoker),
+                        this.local.name
+                    );
+                    break;
+
+                case Target.ListVariable:
+                    VariablesManager.events.StartListenListAny(
+                        this.OnChangeVariable,
+                        this.list.GetListVariables(invoker).gameObject
+                    );
+                    break;
+            }
+        }
+
+        public void StopListeningVariableChanges(GameObject invoker)
+        {
+            switch (this.target)
+            {
+                case Target.GlobalVariable:
+                    VariablesManager.events.RemoveChangeGlobal(
+                        this.OnChangeVariable,
+                        this.global.name
+                    );
+                    break;
+
+                case Target.LocalVariable:
+                    VariablesManager.events.RemoveChangeLocal(
+                        this.OnChangeVariable,
+                        this.local.GetGameObject(invoker),
+                        this.local.name
+                    );
+                    break;
+
+                case Target.ListVariable:
+                    VariablesManager.events.StopListenListAny(
+                        this.OnChangeVariable,
+                        this.list.GetListVariables(invoker).gameObject
+                    );
+                    break;
+            }
+        }
+
+        private void OnChangeVariable(string variableID)
+        {
+            this.eventChangeVariable.Invoke();
+        }
+
+        private void OnChangeVariable(int index, object prev, object next)
+        {
+            this.eventChangeVariable.Invoke();
+        }
+
+        // UTILITIES: -----------------------------------------------------------------------------
+
+        public override string ToString ()
 		{
 			string result = "(unknown)";
 			switch (this.target)

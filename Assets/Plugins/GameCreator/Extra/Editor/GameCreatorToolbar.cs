@@ -100,7 +100,12 @@
         private static void Enable()
         {
             EditorPrefs.SetBool(KEY_TOOLBAR_ENABLED, true);
+
+            #if UNITY_2019_2_OR_NEWER
+            SceneView.duringSceneGui += OnPaintToolbar;
+            #else
             SceneView.onSceneGUIDelegate += OnPaintToolbar;
+            #endif
 
             DatabaseGeneral general = DatabaseGeneral.Load();
             MOVE_OFFSET_X = general.toolbarPositionX;
@@ -112,7 +117,13 @@
         private static void Disable()
         {
             EditorPrefs.SetBool(KEY_TOOLBAR_ENABLED, false);
+
+            #if UNITY_2019_2_OR_NEWER
+            SceneView.duringSceneGui -= OnPaintToolbar;
+            #else
             SceneView.onSceneGUIDelegate -= OnPaintToolbar;
+            #endif
+
             SceneView.RepaintAll();
         }
 

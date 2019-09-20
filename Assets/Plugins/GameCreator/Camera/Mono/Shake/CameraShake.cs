@@ -107,7 +107,6 @@
             if (this.origin != null)
             {
                 float distance = Vector3.Distance(this.origin.position, camera.transform.position);
-                Debug.Log(distance + " / " + this.radius);
                 coefficient = 1f - Mathf.Clamp01(distance/this.radius);
             }
 

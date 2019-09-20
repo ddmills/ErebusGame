@@ -7,6 +7,7 @@
     using GameCreator.Core;
 
     [DisallowMultipleComponent]
+    [AddComponentMenu("Game Creator/List Variables")]
     public class ListVariables : LocalVariables
     {
         public enum Position

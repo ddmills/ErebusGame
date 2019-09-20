@@ -30,8 +30,10 @@
         private const string PROP_AVOIDWALLCLIP = "avoidWallClip";
         private const string PROP_AVOIDWALLRADIUS = "wallClipRadius";
         private const string PROP_WALLCLIPLAYER = "wallClipLayerMask";
+        private const string PROP_REPO = "autoRepositionBehind";
+        private const string PROP_REPOSPEED = "autoRepositionSpeed";
 
-		// PROPERTIES: -------------------------------------------------------------------------------------------------
+        // PROPERTIES: -------------------------------------------------------------------------------------------------
 
         private SerializedProperty spAllowZoom;
         private SerializedProperty spInitialZoom;
@@ -52,9 +54,12 @@
         private SerializedProperty spAvoidWallRadius;
         private SerializedProperty spWallClipLayerMask;
 
-		// INITIALIZE: -------------------------------------------------------------------------------------------------
+        private SerializedProperty spReposition;
+        private SerializedProperty spRepositionSpeed;
 
-		protected override void OnSubEnable()
+        // INITIALIZE: -------------------------------------------------------------------------------------------------
+
+        protected override void OnSubEnable()
 		{
             this.spAllowZoom = serializedObject.FindProperty(PROP_CAN_ZOOM);
             this.spInitialZoom = serializedObject.FindProperty(PROP_INITIAL_ZOOM);
@@ -73,7 +78,10 @@
             this.spAvoidWallClip = serializedObject.FindProperty(PROP_AVOIDWALLCLIP);
             this.spAvoidWallRadius = serializedObject.FindProperty(PROP_AVOIDWALLRADIUS);
             this.spWallClipLayerMask = serializedObject.FindProperty(PROP_WALLCLIPLAYER);
-		}
+
+            this.spReposition = serializedObject.FindProperty(PROP_REPO);
+            this.spRepositionSpeed = serializedObject.FindProperty(PROP_REPOSPEED);
+        }
 
 		// INSPECTOR GUI: ----------------------------------------------------------------------------------------------
 
@@ -128,7 +136,15 @@
             EditorGUI.indentLevel--;
             EditorGUI.EndDisabledGroup();
 
-			serializedObject.ApplyModifiedProperties();
+            EditorGUILayout.Space();
+            EditorGUILayout.PropertyField(this.spReposition);
+            EditorGUI.indentLevel++;
+            EditorGUI.BeginDisabledGroup(!this.spReposition.boolValue);
+            EditorGUILayout.PropertyField(this.spRepositionSpeed);
+            EditorGUI.EndDisabledGroup();
+            EditorGUI.indentLevel--;
+
+            serializedObject.ApplyModifiedProperties();
 			return false;
 		}
 

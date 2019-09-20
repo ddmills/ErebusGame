@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 //This is a static helper class that offers various methods for calculating and modifying vectors (as well as float values);
@@ -110,6 +110,4 @@ public class VectorMath : MonoBehaviour
 
         return _normalizedVector * _newLength;
     }
-
-
 }

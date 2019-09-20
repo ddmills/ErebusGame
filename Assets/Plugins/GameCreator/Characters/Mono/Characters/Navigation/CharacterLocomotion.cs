@@ -7,6 +7,7 @@
     using UnityEngine.Events;
     using GameCreator.Core;
     using GameCreator.Variables;
+    using System;
 
     [System.Serializable]
     public class CharacterLocomotion
@@ -54,12 +55,13 @@
         private const float MAX_GROUND_VSPEED = -9.8f;
         private const float GROUND_TIME_OFFSET = 0.1f;
 
-        private const float ACCELERATION = 25f;
-
         // PROPERTIES: ----------------------------------------------------------------------------
 
         public bool isControllable = true;
         public float runSpeed = 4.0f;
+        public float acceleration = 10f;
+        public float deceleration = 4f;
+
         [Range(0, 720f)]
         public float angularSpeed = 540f;
         public float gravity = -9.81f;
@@ -67,7 +69,7 @@
 
         public bool canRun = true;
         public bool canJump = true;
-        public float jumpForce = 15.0f;
+        public float jumpForce = 6.0f;
         public int jumpTimes = 1;
         public float timeBetweenJumps = 0.5f;
 
@@ -94,6 +96,7 @@
         private Vector3 lastSavedVelocity = Vector3.zero;
 
         [HideInInspector] public Character character;
+
         [HideInInspector] public ANIM_CONSTRAINT animatorConstraint = ANIM_CONSTRAINT.NONE;
         [HideInInspector] public ILocomotionDriver locomotionDriver;
         [HideInInspector] public NavMeshAgent navmeshAgent;
@@ -126,23 +129,21 @@
             this.locomotionDriver.SetExtendSensorRange(this.character.IsGrounded());
             this.HandleGravity();
 
-            this.currentLocomotionType = LOCOMOTION_SYSTEM.LocomotionDriver; // TODO ??
             this.currentLocomotionType = this.currentLocomotionSystem.Update();
-
             this.lastSavedVelocity = this.locomotionDriver.GetVelocity();
         }
 
         // PUBLIC METHODS: ------------------------------------------------------------------------
 
+        public void AddMomentum(Vector3 value)
+        {
+            this.momentum += value;
+        }
+
         public void Dash(Vector3 direction, float impulse, float duration, float drag)
         {
             this.SetDirectionalDirection(Vector3.zero);
             this.currentLocomotionSystem.Dash(direction, impulse, duration, drag);
-        }
-
-        public void AddMomentum(Vector3 value)
-        {
-            this.momentum += value;
         }
 
         public int Jump()
@@ -153,7 +154,7 @@
         public int Jump(float jumpForce)
         {
             // bool isGrounded = (
-            //     this.locomotionDriver.IsGrounded() ||
+            //     this.characterController.isGrounded ||
             //     Time.time < this.lastGroundTime + JUMP_COYOTE_TIME
             // );
 
@@ -178,16 +179,11 @@
 
         public void Teleport(Vector3 position)
         {
-            switch (this.currentLocomotionType)
-            {
-                case CharacterLocomotion.LOCOMOTION_SYSTEM.LocomotionDriver:
-                    this.character.transform.position = position;
-                    break;
+            this.character.transform.position = position;
 
-                case CharacterLocomotion.LOCOMOTION_SYSTEM.NavigationMeshAgent:
-                    this.character.transform.position = position;
-                    this.character.characterLocomotion.navmeshAgent.Warp(position);
-                    break;
+            if (this.currentLocomotionType == CharacterLocomotion.LOCOMOTION_SYSTEM.NavigationMeshAgent)
+            {
+                this.character.characterLocomotion.navmeshAgent.Warp(position);
             }
         }
 
@@ -218,24 +214,34 @@
             this.character.onIsControllable.Invoke(this.isControllable);
         }
 
+        public Vector3 GetAimDirection()
+        {
+            return this.currentLocomotionSystem.aimDirection;
+        }
+
+        public Vector3 GetMovementDirection()
+        {
+            return this.currentLocomotionSystem.movementDirection;
+        }
+
         private void OnGroundContactLost()
         {
             Vector3 currentVelocity = this.lastSavedVelocity;
 
-            //Remove all vertical parts of 'currentVelocity';
+             //Remove all vertical parts of 'currentVelocity';
             currentVelocity = VectorMath.RemoveDotVector(currentVelocity, this.locomotionDriver.transform.up);
 
-            //Calculate magnitude and direction from 'currentVelocity';
+             //Calculate magnitude and direction from 'currentVelocity';
             float magnitude = currentVelocity.magnitude;
             Vector3 direction = Vector3.zero;
 
-            //Calculate velocity direction;
+             //Calculate velocity direction;
             if (magnitude != 0f)
             {
                 direction = currentVelocity / magnitude;
             }
 
-            // TODO: Subtract from 'magnitude', based on 'movementSpeed' and 'airControl', check for overshooting;
+             // TODO: Subtract from 'magnitude', based on 'movementSpeed' and 'airControl', check for overshooting;
             // if (magnitude >= movementSpeed * airControl)
             // {
             //     magnitude -= movementSpeed * airControl;
@@ -245,41 +251,31 @@
             //     magnitude = 0f;
             // }
 
-            // momentum = direction * magnitude;
+             // momentum = direction * magnitude;
             momentum = Vector3.zero;
         }
 
-        private void OnGroundContactRegained(Vector3 collisionVelocity)
+         private void OnGroundContactRegained(Vector3 collisionVelocity)
         {
             if (this.character.onLand != null)
             {
                 this.character.onLand.Invoke(this.momentum.y); // TODO: send vector3
             }
 
-            this.momentum = Vector3.zero;
+             this.momentum = Vector3.zero;
         }
 
-        private bool IsRisingOrFalling()
+         private bool IsRisingOrFalling()
         {
             Vector3 verticalMomentum = VectorMath.ExtractDotVector(this.momentum, this.locomotionDriver.transform.up);
             float limit = 0.001f;
 
-            return verticalMomentum.magnitude > limit;
+             return verticalMomentum.magnitude > limit;
         }
 
-        public Vector3 GetMomentum()
+         public Vector3 GetMomentum()
         {
             return this.momentum;
-        }
-
-        public Vector3 GetAimDirection()
-        {
-            return this.currentLocomotionSystem.aimDirection;
-        }
-
-        public Vector3 GetMovementDirection()
-        {
-            return this.currentLocomotionSystem.movementDirection;
         }
 
         // PUBLIC LOCOMOTION METHODS: -------------------------------------------------------------
@@ -338,7 +334,7 @@
             this.navmeshAgent.updateUpAxis = false;
             this.navmeshAgent.radius = this.locomotionDriver.GetRadius();
             this.navmeshAgent.height = this.locomotionDriver.GetHeight();
-            this.navmeshAgent.acceleration = ACCELERATION;
+            this.navmeshAgent.acceleration = this.acceleration;
         }
 
         private void ChangeLocomotionSystem<TLS>() where TLS : ILocomotionSystem, new()
@@ -380,7 +376,7 @@
         {
             bool isRising = IsRisingOrFalling() && (VectorMath.GetDotProduct(this.momentum, this.locomotionDriver.transform.up) > 0f);
 
-            switch (this.character.characterState.locomotionState)
+             switch (this.character.characterState.locomotionState)
             {
                 case Character.LocomotionState.Grounded:
                     if (isRising)
@@ -427,15 +423,16 @@
                     break;
             }
 
+            // TODO cleanup
             Vector3 worldVelocity = Vector3.zero;
             bool isSliding = this.currentLocomotionSystem.isSliding;
-            bool isGroundeded = true;
+            bool isGrounded = true;
 
             switch (locomotionSystem)
             {
                 case LOCOMOTION_SYSTEM.LocomotionDriver:
                     worldVelocity = this.locomotionDriver.GetVelocity();
-                    isGroundeded = (
+                    isGrounded = (
                         this.locomotionDriver.IsGrounded() ||
                         Time.time - this.lastGroundTime < GROUND_TIME_OFFSET
                     );
@@ -446,7 +443,7 @@
                         ? this.locomotionDriver.GetVelocity()
                         : this.navmeshAgent.velocity
                     );
-                    isGroundeded = (
+                    isGrounded = (
                         !this.navmeshAgent.isOnOffMeshLink ||
                         Time.time - this.lastGroundTime < GROUND_TIME_OFFSET
                     );
@@ -460,7 +457,7 @@
 
             this.character.characterState.pivotSpeed = this.currentLocomotionSystem.pivotSpeed;
 
-            this.character.characterState.isGrounded = isGroundeded ? 1f : 0f;
+            this.character.characterState.isGrounded = isGrounded ? 1f : 0f;
             this.character.characterState.isSliding = isSliding ? 1f : 0f;
             this.character.characterState.isDashing = this.currentLocomotionSystem.isDashing ? 1f : 0f;
             this.character.characterState.normal = this.terrainNormal;

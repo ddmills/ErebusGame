@@ -15,7 +15,10 @@
 	public class ActionInstantiate : IAction 
 	{
         public TargetGameObject prefab = new TargetGameObject();
-		public TargetPosition initLocation;
+        public TargetPosition initLocation = new TargetPosition();
+
+        [Space]
+        public VariableProperty storeInstance = new VariableProperty();
 
 		// EXECUTABLE: ----------------------------------------------------------------------------
 		
@@ -26,7 +29,9 @@
             {
                 Vector3 position = this.initLocation.GetPosition(target, Space.Self);
                 Quaternion rotation = this.initLocation.GetRotation(target);
-                Instantiate(prefabValue, position, rotation);
+
+                GameObject instance = Instantiate(prefabValue, position, rotation);
+                if (instance != null) this.storeInstance.Set(instance, target);
             }
 
             return true;
@@ -41,14 +46,17 @@
 		public static new string NAME = "Object/Instantiate";
 		private const string NODE_TITLE = "Instantiate {0}";
 
-		// PROPERTIES: ----------------------------------------------------------------------------
+        private static readonly GUIContent GC_STORE = new GUIContent("Store (optional)");
 
-		private SerializedProperty spPrefab;
+        // PROPERTIES: ----------------------------------------------------------------------------
+
+        private SerializedProperty spPrefab;
 		private SerializedProperty spInitLocation;
+        private SerializedProperty spStore;
 
-		// INSPECTOR METHODS: ---------------------------------------------------------------------
+        // INSPECTOR METHODS: ---------------------------------------------------------------------
 
-		public override string GetNodeTitle()
+        public override string GetNodeTitle()
 		{
 			return string.Format(NODE_TITLE, this.prefab);
 		}
@@ -57,13 +65,15 @@
 		{
 			this.spPrefab = this.serializedObject.FindProperty("prefab");
 			this.spInitLocation = this.serializedObject.FindProperty("initLocation");
-		}
+            this.spStore = this.serializedObject.FindProperty("storeInstance");
+        }
 
 		protected override void OnDisableEditorChild ()
 		{
 			this.spPrefab = null;
 			this.spInitLocation = null;
-		}
+            this.spStore = null;
+        }
 
 		public override void OnInspectorGUI()
 		{
@@ -71,6 +81,9 @@
 
 			EditorGUILayout.PropertyField(this.spPrefab);
 			EditorGUILayout.PropertyField(this.spInitLocation);
+
+            EditorGUILayout.Space();
+            EditorGUILayout.PropertyField(this.spStore, GC_STORE);
 
 			this.serializedObject.ApplyModifiedProperties();
 		}
