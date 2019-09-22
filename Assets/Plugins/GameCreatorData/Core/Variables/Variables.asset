@@ -9,8 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8fd88e18bfbe04f3aa7a8e49ab062838, type: 3}
-  m_Name: DatabaseVariables
+  m_Script: {fileID: 11500000, guid: ba302213647f84325bde30c4de2a9e73, type: 3}
+  m_Name: Variables
   m_EditorClassIdentifier: 
-  tags: {fileID: 11400000, guid: ac7992f7c763bc74a8823102dd50105c, type: 2}
-  variables: {fileID: 11400000, guid: 542d0a42fed1359439e797de34ee172a, type: 2}
+  references: []
