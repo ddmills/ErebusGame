@@ -45,10 +45,8 @@
         public bool invertAxis = false;
 
         public string jumpKey = "Jump";
-        public float jumpMomentumInitial = 6f;
         public float jumpMomentumPost = 1f;
         public float jumpMomentumPostDurationSeconds = 5;
-        private float currentJumpDurationStartTime = 0;
 
         private bool uiConstrained = false;
 
@@ -88,11 +86,7 @@
         {
             if (Input.GetButtonDown(this.jumpKey) && this.IsControllable())
             {
-                if (this.IsGrounded())
-                {
-                    this.AddMomentum(Vector3.up * jumpMomentumInitial);
-                    this.currentJumpDurationStartTime = Time.fixedTime;
-                }
+                this.Jump();
             }
         }
 
@@ -115,7 +109,7 @@
                 {
                     float currentJumpDurationSeconds = Time.fixedTime - this.currentJumpDurationStartTime;
 
-                     if (currentJumpDurationSeconds <= this.jumpMomentumPostDurationSeconds)
+                    if (currentJumpDurationSeconds <= this.jumpMomentumPostDurationSeconds)
                     {
                         this.AddMomentum(Vector3.up * jumpMomentumPost);
                     }
@@ -226,20 +220,20 @@
         }
 
         private Camera GetMainCamera()
-		{
-			if (HookCamera.Instance != null) return HookCamera.Instance.Get<Camera>();
-			if (Camera.main != null) return Camera.main;
+        {
+            if (HookCamera.Instance != null) return HookCamera.Instance.Get<Camera>();
+            if (Camera.main != null) return Camera.main;
 
             Debug.LogError(ERR_NOCAM, gameObject);
-			return null;
-		}
+            return null;
+        }
 
         private void UpdateUIConstraints()
         {
             EventSystemManager.Instance.Wakeup();
             this.uiConstrained = EventSystemManager.Instance.IsPointerOverUI();
 
-            #if UNITY_IOS || UNITY_ANDROID
+#if UNITY_IOS || UNITY_ANDROID
             for (int i = 0; i < Input.touches.Length; ++i)
             {
                 if (Input.GetTouch(i).phase != TouchPhase.Began) continue;
@@ -248,7 +242,7 @@
                 bool pointerOverUI = EventSystemManager.Instance.IsPointerOverUI(fingerID);
                 if (pointerOverUI) this.uiConstrained = true;
             }
-            #endif
+#endif
         }
 
         // GAME SAVE: -----------------------------------------------------------------------------

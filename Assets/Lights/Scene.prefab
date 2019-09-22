@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6586809274506475078}
   - component: {fileID: 6586809274506475079}
-  - component: {fileID: 6586809274506475072}
+  - component: {fileID: 1179248001}
   m_Layer: 0
   m_Name: MainMotor
   m_TagString: Untagged
@@ -25,13 +25,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6586809274506475073}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 2.7785854, y: -0.9735633, z: 0.9387951}
+  m_LocalRotation: {x: 0, y: 0.68860775, z: 0, w: 0.725134}
+  m_LocalPosition: {x: -15.87, y: 2, z: 30.88}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 6586809276574646080}
   m_RootOrder: 1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 87.04, z: 0}
 --- !u!114 &6586809274506475079
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -45,8 +45,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isMainCameraMotor: 1
-  cameraMotorType: {fileID: 6586809274506475072}
---- !u!114 &6586809274506475072
+  cameraMotorType: {fileID: 1179248001}
+--- !u!114 &1179248001
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -58,7 +58,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9ac027e764cd4be5aaebfa04aeddd1e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  setCameraProperties: 1
+  setCameraProperties: 0
   projection: 1
   cameraSize: 5
   fieldOfView: 60
@@ -78,13 +78,18 @@ MonoBehaviour:
       targetObject: {fileID: 0}
       select: 1
       index: 0
-  targetOffset: {x: 0, y: 1.4, z: 0}
-  pivotOffset: {x: -0.4, y: 0, z: 0}
+    eventChangeVariable:
+      m_PersistentCalls:
+        m_Calls: []
+      m_TypeName: GameCreator.Core.TargetGameObject+ChangeEvent, Assembly-CSharp-firstpass,
+        Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  targetOffset: {x: 0, y: 1, z: 0}
+  pivotOffset: {x: 0, y: 0, z: 2}
   allowOrbitInput: 1
   orbitInput: 0
-  orbitSpeed: 25
-  maxPitch: 125
-  sensitivity: {x: 3, y: 3}
+  orbitSpeed: 10
+  maxPitch: 120
+  sensitivity: {x: 2, y: 2}
   allowZoom: 0
   zoomSpeed: 25
   initialZoom: 3
@@ -95,6 +100,8 @@ MonoBehaviour:
   wallClipLayerMask:
     serializedVersion: 2
     m_Bits: 4294967291
+  autoRepositionBehind: 0
+  autoRepositionSpeed: 2.5
 --- !u!1 &6586809274903881782
 GameObject:
   m_ObjectHideFlags: 0
@@ -225,7 +232,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6586809276561426738}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 3.0900002, y: 1.2264367, z: -2.611}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 6586809276574646080}

@@ -140,6 +140,14 @@
             this.momentum += value;
         }
 
+        public bool CanJump()
+        {
+            bool isGrounded = this.character.IsGrounded();
+            bool jumpNumber = isGrounded || this.jumpChain < this.jumpTimes;
+
+            return this.canJump && jumpNumber;
+        }
+
         public void Dash(Vector3 direction, float impulse, float duration, float drag)
         {
             this.SetDirectionalDirection(Vector3.zero);
@@ -151,30 +159,30 @@
             return this.Jump(this.jumpForce);
         }
 
-        public int Jump(float jumpForce)
+        public int Jump(float force)
         {
-            // bool isGrounded = (
-            //     this.characterController.isGrounded ||
-            //     Time.time < this.lastGroundTime + JUMP_COYOTE_TIME
-            // );
+            if (!this.CanJump())
+            {
+                return -1;
+            }
 
-            // bool jumpDelay = this.lastJumpTime + this.timeBetweenJumps < Time.time;
-            // bool jumpNumber = isGrounded || this.jumpChain < this.jumpTimes;
-            // if (this.canJump && jumpNumber && jumpDelay)
-            // {
-            //     this.verticalSpeed = jumpForce;
-            //     this.lastJumpTime = Time.time;
-            //     if (this.character.onJump != null)
-            //     {
-            //         this.character.onJump.Invoke(this.jumpChain);
-            //     }
+            this.character.currentJumpDurationStartTime = Time.fixedTime;
 
-            //     this.jumpChain++;
+            if (this.jumpChain != 0)
+            {
+                this.momentum = Vector3.zero;
+            }
 
-            //     return this.jumpChain;
-            // }
+            this.AddMomentum(force * Vector3.up);
 
-            return -1;
+            if (this.character.onJump != null)
+            {
+                this.character.onJump.Invoke(this.jumpChain);
+            }
+
+            this.jumpChain++;
+
+            return this.jumpChain;
         }
 
         public void Teleport(Vector3 position)
@@ -228,20 +236,20 @@
         {
             Vector3 currentVelocity = this.lastSavedVelocity;
 
-             //Remove all vertical parts of 'currentVelocity';
+            //Remove all vertical parts of 'currentVelocity';
             currentVelocity = VectorMath.RemoveDotVector(currentVelocity, this.locomotionDriver.transform.up);
 
-             //Calculate magnitude and direction from 'currentVelocity';
+            //Calculate magnitude and direction from 'currentVelocity';
             float magnitude = currentVelocity.magnitude;
             Vector3 direction = Vector3.zero;
 
-             //Calculate velocity direction;
+            //Calculate velocity direction;
             if (magnitude != 0f)
             {
                 direction = currentVelocity / magnitude;
             }
 
-             // TODO: Subtract from 'magnitude', based on 'movementSpeed' and 'airControl', check for overshooting;
+            // TODO: Subtract from 'magnitude', based on 'movementSpeed' and 'airControl', check for overshooting;
             // if (magnitude >= movementSpeed * airControl)
             // {
             //     magnitude -= movementSpeed * airControl;
@@ -251,29 +259,31 @@
             //     magnitude = 0f;
             // }
 
-             // momentum = direction * magnitude;
+            // momentum = direction * magnitude;
             momentum = Vector3.zero;
         }
 
-         private void OnGroundContactRegained(Vector3 collisionVelocity)
+        private void OnGroundContactRegained(Vector3 collisionVelocity)
         {
+            this.jumpChain = 0;
+
             if (this.character.onLand != null)
             {
                 this.character.onLand.Invoke(this.momentum.y); // TODO: send vector3
             }
 
-             this.momentum = Vector3.zero;
+            this.momentum = Vector3.zero;
         }
 
-         private bool IsRisingOrFalling()
+        private bool IsRisingOrFalling()
         {
             Vector3 verticalMomentum = VectorMath.ExtractDotVector(this.momentum, this.locomotionDriver.transform.up);
             float limit = 0.001f;
 
-             return verticalMomentum.magnitude > limit;
+            return verticalMomentum.magnitude > limit;
         }
 
-         public Vector3 GetMomentum()
+        public Vector3 GetMomentum()
         {
             return this.momentum;
         }
@@ -299,7 +309,7 @@
         {
             this.ChangeLocomotionSystem<LocomotionSystemTarget>();
             ((LocomotionSystemTarget)this.currentLocomotionSystem)
-                .SetTarget(position, rotation, stopThreshold,  callback);
+                .SetTarget(position, rotation, stopThreshold, callback);
         }
 
         public void FollowTarget(Transform target, float minRadius, float maxRadius)
@@ -351,7 +361,7 @@
             Vector3 verticalMomentum = Vector3.zero;
             Vector3 horizontalMomentum = Vector3.zero;
 
-            if(this.momentum != Vector3.zero)
+            if (this.momentum != Vector3.zero)
             {
                 verticalMomentum = VectorMath.ExtractDotVector(this.momentum, this.locomotionDriver.transform.up);
                 horizontalMomentum = this.momentum - verticalMomentum;
@@ -376,7 +386,7 @@
         {
             bool isRising = IsRisingOrFalling() && (VectorMath.GetDotProduct(this.momentum, this.locomotionDriver.transform.up) > 0f);
 
-             switch (this.character.characterState.locomotionState)
+            switch (this.character.characterState.locomotionState)
             {
                 case Character.LocomotionState.Grounded:
                     if (isRising)
