@@ -51,7 +51,7 @@
 
         // CONSTANTS: -----------------------------------------------------------------------------
 
-        private const float JUMP_COYOTE_TIME = 0.3f;
+        private const float JUMP_COYOTE_TIME = .16f;
         private const float MAX_GROUND_VSPEED = -9.8f;
         private const float GROUND_TIME_OFFSET = 0.1f;
 
@@ -90,7 +90,6 @@
         // INNER PROPERTIES: ----------------------------------------------------------------------
 
         private float lastGroundTime = 0f;
-        private float lastJumpTime = 0f;
         private int jumpChain = 0;
         private Vector3 momentum = Vector3.zero;
         private Vector3 lastSavedVelocity = Vector3.zero;
@@ -108,8 +107,7 @@
 
         public void Setup(Character character)
         {
-            this.lastGroundTime = Time.time;
-            this.lastJumpTime = Time.time;
+            this.lastGroundTime = Time.fixedTime;
 
             this.character = character;
             this.locomotionDriver = this.character.GetComponent<ILocomotionDriver>();
@@ -128,6 +126,11 @@
             this.UpdateCharacterState(this.currentLocomotionType);
             this.locomotionDriver.SetExtendSensorRange(this.character.IsGrounded());
             this.HandleGravity();
+
+            if (((this.lastGroundTime + CharacterLocomotion.JUMP_COYOTE_TIME) <= Time.fixedTime) && this.jumpChain == 0)
+            {
+                this.jumpChain = 1;
+            }
 
             this.currentLocomotionType = this.currentLocomotionSystem.Update();
             this.lastSavedVelocity = this.locomotionDriver.GetVelocity();
@@ -242,6 +245,8 @@
             //Calculate magnitude and direction from 'currentVelocity';
             float magnitude = currentVelocity.magnitude;
             Vector3 direction = Vector3.zero;
+
+            this.lastGroundTime = Time.fixedTime;
 
             //Calculate velocity direction;
             if (magnitude != 0f)
@@ -371,6 +376,7 @@
 
             if (this.character.IsGrounded())
             {
+                this.lastGroundTime = Time.fixedTime;
                 verticalMomentum = Vector3.zero;
             }
 
