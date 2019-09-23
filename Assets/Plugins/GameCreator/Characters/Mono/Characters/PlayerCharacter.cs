@@ -142,10 +142,18 @@
             if (maincam == null) return;
 
             Vector3 moveDirection = maincam.transform.TransformDirection(direction);
+            float magnitude = moveDirection.magnitude;
+
             moveDirection.Scale(PLANE);
+
             if (moveDirection.magnitude > 1f)
             {
                 moveDirection.Normalize();
+            }
+            else
+            {
+                moveDirection.Normalize();
+                moveDirection *= magnitude;
             }
             this.characterLocomotion.SetDirectionalDirection(moveDirection);
         }

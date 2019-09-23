@@ -115,7 +115,9 @@ GameObject:
   - component: {fileID: 2911347521014859453}
   - component: {fileID: 2911347521014859452}
   - component: {fileID: 2911347521014859394}
-  - component: {fileID: 2911347521014859395}
+  - component: {fileID: 3656529161747070240}
+  - component: {fileID: 1817224800}
+  - component: {fileID: 1817224804}
   m_Layer: 0
   m_Name: Actions (1)
   m_TagString: Untagged
@@ -173,7 +175,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   actions:
   - {fileID: 2911347521014859394}
-  - {fileID: 2911347521014859395}
+  - {fileID: 1817224804}
+  - {fileID: 3656529161747070240}
+  - {fileID: 1817224800}
   executingIndex: -1
   isExecuting: 0
 --- !u!114 &2911347521014859394
@@ -215,7 +219,7 @@ MonoBehaviour:
   parameterInteger: 1
   parameterFloat: 1
   parameterBool: 1
---- !u!114 &2911347521014859395
+--- !u!114 &3656529161747070240
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
@@ -224,12 +228,113 @@ MonoBehaviour:
   m_GameObject: {fileID: 2911347521014859454}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dd9e621b1ec874c8daa5bd0d1aaede64, type: 3}
+  m_Script: {fileID: 11500000, guid: 093bbc6a7c1334b37ac569a948728c55, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   isExpanded: 1
-  logType: 0
-  message: asdf
+  waitTime: 5.5
+--- !u!114 &1817224800
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2911347521014859454}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c80e1c0b54ada45758b8ab180518b7ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isExpanded: 1
+  audioClip: {fileID: 8300000, guid: 90314e629f3713f4b9574fadc8f33512, type: 3}
+  fadeIn: 1
+  fadeInTime: 0.5
+  spatialBlend: 0.85
+  pitch:
+    optionIndex: 0
+    value: 1
+    global:
+      allowTypesMask: 4
+      name: 
+    local:
+      allowTypesMask: 4
+      name: 
+      targetType: 2
+      targetObject: {fileID: 0}
+    list:
+      targetType: 3
+      targetObject: {fileID: 0}
+      select: 1
+      index: 0
+  position:
+    target: 2
+    offset: {x: 0, y: 0, z: 0}
+    targetTransform: {fileID: 0}
+    targetPosition: {x: 0, y: 0, z: 0}
+    local:
+      allowTypesMask: 608
+      name: 
+      targetType: 2
+      targetObject: {fileID: 0}
+    global:
+      allowTypesMask: 608
+      name: 
+    list:
+      targetType: 3
+      targetObject: {fileID: 0}
+      select: 1
+      index: 0
+--- !u!114 &1817224804
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2911347521014859454}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c80e1c0b54ada45758b8ab180518b7ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isExpanded: 1
+  audioClip: {fileID: 8300000, guid: 2e50a70db9507244d91ff11d64bd6143, type: 3}
+  fadeIn: 1
+  fadeInTime: 0.64
+  spatialBlend: 0.791
+  pitch:
+    optionIndex: 0
+    value: 1.2
+    global:
+      allowTypesMask: 4
+      name: 
+    local:
+      allowTypesMask: 4
+      name: 
+      targetType: 2
+      targetObject: {fileID: 0}
+    list:
+      targetType: 3
+      targetObject: {fileID: 0}
+      select: 1
+      index: 0
+  position:
+    target: 2
+    offset: {x: 0, y: -1.06, z: 0}
+    targetTransform: {fileID: 0}
+    targetPosition: {x: 0, y: 0, z: 0}
+    local:
+      allowTypesMask: 608
+      name: 
+      targetType: 2
+      targetObject: {fileID: 0}
+    global:
+      allowTypesMask: 608
+      name: 
+    list:
+      targetType: 3
+      targetObject: {fileID: 0}
+      select: 1
+      index: 0
 --- !u!1001 &2911347521739164716
 PrefabInstance:
   m_ObjectHideFlags: 0
